@@ -56,7 +56,7 @@ void pingClient(int client_fd)
     std::cout << "Could not ping client\n";
   }
 
-  close(client_fd);
+  // close(client_fd);
 }
 
 int main(int argc, char **argv)
@@ -114,10 +114,10 @@ int main(int argc, char **argv)
       break;
     }
     auto buffer = readSome(client_fd);
-    // if (buffer == std::nullopt)
-    // {
-    //   break;
-    // }
+    if (buffer == std::nullopt)
+    {
+      break;
+    }
 
     threads.emplace_back(pingClient, client_fd);
   }
