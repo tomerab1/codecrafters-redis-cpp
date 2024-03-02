@@ -11,6 +11,16 @@
 
 static constexpr std::string pongStr = "+PONG\r\n";
 
+void pingClient(int client_fd) {
+  int count = 2;
+  while (count > 0) {
+    if (write(client_fd, pongStr.data(), pongStr.length()) < 0) {
+      std::cout << "Could not ping client\n";
+    }
+    count--;
+  }
+}
+
 int main(int argc, char **argv) {
   // You can use print statements as follows for debugging, they'll be visible when running tests.
   std::cout << "Logs from your program will appear here!\n";
@@ -54,21 +64,7 @@ int main(int argc, char **argv) {
   int client_fd = accept(server_fd, (struct sockaddr *) &client_addr, (socklen_t *) &client_addr_len);
   std::cout << "Client connected\n";
 
-    std::string buffer(4096, '\0');
-    if (read(client_fd, buffer.data(), buffer.size()) < 0) {
-      std::cout << "Could not read from client\n";
-    }
-
-    std::stringstream ss(buffer);
-    std::string line;
-
-    while (std::getline(ss, line, '\n')) {
-      if (line == "ping") {
-        if (write(client_fd, pongStr.data(), pongStr.length()) < 0) {
-          std::cout << "Could not send pong\n";
-        }
-      }
-    }
+  pingClient(client_fd);
 
   close(client_fd);
   close(server_fd);
