@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <string>
+#include <sstream>
 #include <cstring>
 #include <unistd.h>
 #include <sys/types.h>
@@ -53,9 +54,19 @@ int main(int argc, char **argv) {
   int client_fd = accept(server_fd, (struct sockaddr *) &client_addr, (socklen_t *) &client_addr_len);
   std::cout << "Client connected\n";
 
-  if (write(client_fd, pongStr.data(), pongStr.length()) < 0) {
-    std::cout << "Could not send pong\n";
-  }
+    std::string buffer(4096, '\0');
+    if (read(client_fd, buffer.data(), buffer.size()) < 0) {
+      std::cout << "Could not read from client\n";
+    }
+
+    std::stringstream ss(buffer);
+    std::string line;
+
+    while (std::getline(ss, line, '\n') && line[0] != '\0') {
+      if (write(client_fd, pongStr.data(), pongStr.length()) < 0) {
+        std::cout << "Could not send pong\n";
+      }
+    }
 
   close(client_fd);
   close(server_fd);
