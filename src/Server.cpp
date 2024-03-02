@@ -36,16 +36,14 @@ std::optional<Buffer> readSome(int client_fd)
 {
   Buffer buff;
 
-  while (true) {
-    int numRecv;
-    if ((numRecv = recv(client_fd, buff.getBuffer(), buff.size(), 0)) < 0)
-    {
-      std::cout << "Error: " << std::strerror(errno) << "\n";
-    }
-    if (numRecv == 0)
-    {
-      return std::nullopt;
-    }
+  int numRecv;
+  if ((numRecv = recv(client_fd, buff.getBuffer(), buff.size(), 0)) < 0)
+  {
+    std::cout << "Error: " << std::strerror(errno) << "\n";
+  }
+  if (numRecv == 0)
+  {
+    return std::nullopt;
   }
 
   return buff;
@@ -53,14 +51,17 @@ std::optional<Buffer> readSome(int client_fd)
 
 void pingClient(int client_fd)
 {
-  auto buffer = readSome(client_fd);
-  if (buffer == std::nullopt)
-  {
-    return;
-  }
-  if (send(client_fd, pongStr.data(), pongStr.length(), 0) < 0)
-  {
-    std::cout << "Could not ping client\n";
+  std::optional<Buffer> buffer = std::nullopt;
+  
+  while ((buffer = readSome(client_fd)) != std::nullopt) {
+    if (buffer == std::nullopt)
+    {
+      break;
+    }
+    if (send(client_fd, pongStr.data(), pongStr.length(), 0) < 0)
+    {
+      std::cout << "Could not ping client\n";
+    }
   }
 
   close(client_fd);
