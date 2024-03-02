@@ -51,6 +51,11 @@ std::optional<Buffer> readSome(int client_fd)
 
 void pingClient(int client_fd)
 {
+  auto buffer = readSome(client_fd);
+  if (buffer == std::nullopt)
+  {
+    return;
+  }
   if (send(client_fd, pongStr.data(), pongStr.length(), 0) < 0)
   {
     std::cout << "Could not ping client\n";
@@ -113,13 +118,6 @@ int main(int argc, char **argv)
       std::cout << "Failed to accept\n";
       break;
     }
-    auto buffer = readSome(client_fd);
-    if (buffer == std::nullopt)
-    {
-      break;
-    }
-
-    std::cout << std::string(buffer.value().getBuffer()) << '\n';
 
     threads.emplace_back(pingClient, client_fd);
   }
