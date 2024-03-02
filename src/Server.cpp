@@ -3,6 +3,7 @@
 #include <string>
 #include <sstream>
 #include <cstring>
+#include <optional>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -10,15 +11,53 @@
 #include <netdb.h>
 
 static constexpr std::string pongStr = "+PONG\r\n";
+static constexpr int MAX_BUFFER = 4096;
+
+class Buffer {
+public:
+  Buffer() {
+    memset(buffer, 0, sizeof(buffer));
+    readIdx = 0;
+  }
+
+  char* getBuffer() { return buffer; }
+  int size() { return MAX_BUFFER; }
+
+private:
+  char buffer[MAX_BUFFER];
+  int readIdx;
+};
+
+std::optional<Buffer> readSome(int client_fd) {
+  Buffer buff;
+
+  int numRecv;
+  if ((numRecv = recv(client_fd, buff.getBuffer(), buff.size(), 0)) < 0) {
+    std::cout << "Error: " << std::strerror(errno) << "\n";
+  }
+  std::cout << numRecv << '\n';
+  if (numRecv == 0) {
+    return std::nullopt;
+  }
+
+  return buff;
+}
 
 void pingClient(int client_fd) {
-  int count = 2;
-  while (count > 0) {
-    if (write(client_fd, pongStr.data(), pongStr.length()) < 0) {
+  // while (true) {
+  //   auto buffer = readSome(client_fd);
+  //   if (buffer == std::nullopt) {
+  //     break;
+  //   }
+
+  //   if (send(client_fd, pongStr.data(), pongStr.length(), 0) < 0) {
+  //     std::cout << "Could not ping client\n";
+  //   }
+  // }
+
+      if (send(client_fd, pongStr.data(), pongStr.length(), 0) < 0) {
       std::cout << "Could not ping client\n";
     }
-    count--;
-  }
 }
 
 int main(int argc, char **argv) {
