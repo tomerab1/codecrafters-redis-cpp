@@ -63,6 +63,7 @@ int main(int argc, char **argv) {
     std::string line;
 
     while (std::getline(ss, line, '\n') && line[0] != '\0') {
+      std::cout << "line=" << line << '\n';
       if (write(client_fd, pongStr.data(), pongStr.length()) < 0) {
         std::cout << "Could not send pong\n";
       }
