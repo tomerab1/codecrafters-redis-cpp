@@ -44,20 +44,18 @@ std::optional<Buffer> readSome(int client_fd) {
 }
 
 void pingClient(int client_fd) {
-  // while (true) {
-  //   auto buffer = readSome(client_fd);
-  //   if (buffer == std::nullopt) {
-  //     break;
-  //   }
+  while (true) {
+    auto buffer = readSome(client_fd);
+    if (buffer == std::nullopt) {
+      break;
+    }
 
-  //   if (send(client_fd, pongStr.data(), pongStr.length(), 0) < 0) {
-  //     std::cout << "Could not ping client\n";
-  //   }
-  // }
-
-      if (send(client_fd, pongStr.data(), pongStr.length(), 0) < 0) {
+    if (send(client_fd, pongStr.data(), pongStr.length(), 0) < 0) {
       std::cout << "Could not ping client\n";
     }
+  }
+  
+  close(client_fd);
 }
 
 int main(int argc, char **argv) {
@@ -102,10 +100,12 @@ int main(int argc, char **argv) {
   
   int client_fd = accept(server_fd, (struct sockaddr *) &client_addr, (socklen_t *) &client_addr_len);
   std::cout << "Client connected\n";
-
   pingClient(client_fd);
 
-  close(client_fd);
+  client_fd = accept(server_fd, (struct sockaddr *) &client_addr, (socklen_t *) &client_addr_len);
+  std::cout << "Client connected\n";
+  pingClient(client_fd);
+
   close(server_fd);
 
   return 0;
