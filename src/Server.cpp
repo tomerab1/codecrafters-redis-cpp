@@ -119,6 +119,8 @@ int main(int argc, char **argv)
       break;
     }
 
+    std::cout << client_fd << '\n';
+
     threads.emplace_back(pingClient, client_fd);
   }
 
