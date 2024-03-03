@@ -115,7 +115,7 @@ void onConnection(int client_fd)
         {
             break;
         }
-        if (splitedString[0] == echoStr)
+        if (splitedString[0].find(echoStr) != std::string::npos)
         {
             onEcho(client_fd,
                    splitedString.size() == 1 ? "" : splitedString[1]);
