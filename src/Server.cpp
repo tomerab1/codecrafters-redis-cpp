@@ -115,19 +115,14 @@ void onConnection(int client_fd)
         {
             break;
         }
-
-        if (splitedString[0] == pingStr)
-        {
-            onPing(client_fd);
-        }
-        else if (splitedString[0] == echoStr)
+        if (splitedString[0] == echoStr)
         {
             onEcho(client_fd,
                    splitedString.size() == 1 ? "" : splitedString[1]);
         }
         else
         {
-            break;
+            onPing(client_fd);
         }
     }
 
