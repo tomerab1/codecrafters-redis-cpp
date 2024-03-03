@@ -1,7 +1,6 @@
 #include <arpa/inet.h>
 #include <cstdlib>
 #include <cstring>
-#include <format>
 #include <iostream>
 #include <netdb.h>
 #include <optional>
@@ -66,7 +65,7 @@ std::optional<Buffer> readSome(int client_fd)
 
 std::string encodeBulk(const std::string& str)
 {
-    return std::format("${}\r\n{}\r\n", str.length(), str);
+    return "$" + std::to_string(str.length()) + "\r\n" + str + "\r\n";
 }
 
 void onPing(int client_fd)
