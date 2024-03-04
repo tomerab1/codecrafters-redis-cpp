@@ -1,3 +1,5 @@
+#include "Parser.hpp"
+
 #include <arpa/inet.h>
 #include <cstdlib>
 #include <cstring>
@@ -12,10 +14,10 @@
 #include <unistd.h>
 #include <vector>
 
-static constexpr std::string pingStr    = "ping\n";
-static constexpr std::string echoStr    = "echo";
-static constexpr std::string pongStr    = "+PONG\r\n";
-static constexpr int         MAX_BUFFER = 4096;
+static constexpr std::string pingStr = "ping";
+static constexpr std::string echoStr = "echo";
+static constexpr std::string pongStr = "+PONG\r\n";
+static constexpr int MAX_BUFFER = 4096;
 
 class Buffer
 {
@@ -43,7 +45,7 @@ class Buffer
 
   private:
     char buffer[MAX_BUFFER];
-    int  readIdx;
+    int readIdx;
 };
 
 std::optional<Buffer> readSome(int client_fd)
@@ -68,6 +70,9 @@ std::string encodeBulk(const std::string& str)
     return "$" + std::to_string(str.length()) + "\r\n" + str + "\r\n";
 }
 
+void parseRedisString(const std::string& redisStr)
+{}
+
 void onPing(int client_fd)
 {
     if (send(client_fd, pongStr.data(), pongStr.length(), 0) < 0)
@@ -86,20 +91,6 @@ void onEcho(int client_fd, const std::string& toEcho)
     }
 }
 
-std::vector<std::string> splitString(const std::string& str, char sep)
-{
-    std::string              temp;
-    std::stringstream        ss(str);
-    std::vector<std::string> res;
-
-    while (std::getline(ss, temp, sep))
-    {
-        res.emplace_back(temp);
-    }
-
-    return res;
-}
-
 void onConnection(int client_fd)
 {
     std::optional<Buffer> buffer = std::nullopt;
@@ -110,17 +101,13 @@ void onConnection(int client_fd)
         {
             break;
         }
-        auto splitedString = splitString(buffer.value().toString(), ' ');
-        if (splitedString.empty())
+
+        auto parsedCommand = Parser::parseCommand(buffer.value().toString());
+        if (parsedCommand[0] == echoStr)
         {
-            break;
+            onEcho(client_fd, parsedCommand[1]);
         }
-        if (splitedString[0].find(echoStr) != std::string::npos)
-        {
-            onEcho(client_fd,
-                   splitedString.size() == 1 ? "" : splitedString[1]);
-        }
-        else
+        else if (parsedCommand[0] == pingStr)
         {
             onPing(client_fd);
         }
@@ -154,9 +141,9 @@ int main(int argc, char** argv)
     }
 
     struct sockaddr_in server_addr;
-    server_addr.sin_family      = AF_INET;
+    server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = INADDR_ANY;
-    server_addr.sin_port        = htons(6379);
+    server_addr.sin_port = htons(6379);
 
     if (bind(server_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) !=
         0)
@@ -173,7 +160,7 @@ int main(int argc, char** argv)
     }
 
     struct sockaddr_in client_addr;
-    int                client_addr_len = sizeof(client_addr);
+    int client_addr_len = sizeof(client_addr);
 
     std::cout << "Waiting for a client to connect...\n";
 
