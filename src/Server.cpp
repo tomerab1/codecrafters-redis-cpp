@@ -97,7 +97,8 @@ class RedisServer
             }
             else
             {
-                workerThreads.emplace_back(handleConnection, client_fd);
+                workerThreads.emplace_back(
+                    &RedisServer::handleConnection, this, client_fd);
             }
         }
     }
@@ -124,7 +125,7 @@ class RedisServer
             }
             else
             {
-                break;  // Unknown command
+                break;
             }
         }
 
@@ -143,7 +144,7 @@ class RedisServer
     {
         if (command.size() < 2)
         {
-            return;  // No argument to echo
+            return;
         }
         std::string response = encodeBulk(command[1]);
         if (send(client_fd, response.data(), response.length(), 0) < 0)
@@ -158,7 +159,7 @@ class RedisServer
         ssize_t numRecv = recv(client_fd, buffer, sizeof(buffer), 0);
         if (numRecv <= 0)
         {
-            return std::nullopt;  // Connection closed or error
+            return std::nullopt;
         }
         return std::string(buffer, buffer + numRecv);
     }
