@@ -66,6 +66,14 @@ class RedisServer
 
     bool bindServer()
     {
+        int reuse = 1;
+        if (setsockopt(
+                server_fd, SOL_SOCKET, SO_REUSEPORT, &reuse, sizeof(reuse)) < 0)
+        {
+            std::cerr << "setsockopt failed\n";
+            return 1;
+        }
+
         struct sockaddr_in server_addr;
         server_addr.sin_family = AF_INET;
         server_addr.sin_addr.s_addr = INADDR_ANY;
