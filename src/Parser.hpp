@@ -46,7 +46,6 @@ class Parser
   public:
     static bool handleRESPArray(std::string& command)
     {
-        command = command.substr(1);
         handleRESPCRLF(command);
         return true;
     }
@@ -86,46 +85,50 @@ class Parser
         std::vector<std::string> res;
         bool isUnknownByte = false;
 
-        while (!commandCpy.empty() && !isUnknownByte)
+        try
         {
-            switch (type)
+            while (!commandCpy.empty() && !isUnknownByte)
             {
-                case RESPDataType::ARRAY:
-                    handleRESPArray(commandCpy);
-                    break;
-                case RESPDataType::BULK_STRING:
-                    try
-                    {
+                switch (type)
+                {
+                    case RESPDataType::ARRAY:
+                        handleRESPArray(commandCpy);
+                        break;
+                    case RESPDataType::BULK_STRING:
                         res.emplace_back(handleRESPBulkString(commandCpy));
-                    }
-                    catch (const std::invalid_argument& e)
-                    {
-                        std::cerr << "Error parsing bulk string: " << e.what()
-                                  << '\n';
-                        return {};
-                    }
-                    break;
-                case RESPDataType::CRLF:
-                    handleRESPCRLF(commandCpy);
-                    break;
-                default:
-                    std::cerr << "Unexpected byte " << commandCpy << '\n';
+                        break;
+                    case RESPDataType::CRLF:
+                        handleRESPCRLF(commandCpy);
+                        break;
+                    default:
+                        std::cerr << "Unexpected byte " << commandCpy << '\n';
+                        isUnknownByte = true;
+                        break;
+                }
+                auto nextByte = commandCpy.substr(0, 1);
+                auto nextTwoBytes = commandCpy.substr(0, 2);
+
+                if (mapByteToType.find(nextByte) != mapByteToType.end())
+                {
+                    type = mapByteToType.find(nextByte)->second;
+                }
+                else if (mapByteToType.find(nextTwoBytes) !=
+                         mapByteToType.end())
+                {
+                    type = mapByteToType.find(nextTwoBytes)->second;
+                }
+                else
+                {
                     isUnknownByte = true;
-                    break;
+                }
             }
-            auto nextByte = commandCpy.substr(0, 1);
-            auto nextTwoBytes = commandCpy.substr(0, 2);
 
-            if (mapByteToType.find(nextByte) != mapByteToType.end())
-            {
-                type = mapByteToType.find(nextByte)->second;
-            }
-            else if (mapByteToType.find(nextTwoBytes) != mapByteToType.end())
-            {
-                type = mapByteToType.find(nextTwoBytes)->second;
-            }
+            return res;
         }
-
-        return res;
+        catch (const std::invalid_argument& e)
+        {
+            std::cerr << "Error parsing command: " << e.what() << '\n';
+            return {};
+        }
     }
 };

@@ -103,6 +103,11 @@ void onConnection(int client_fd)
         }
 
         auto parsedCommand = Parser::parseCommand(buffer.value().toString());
+        if (parsedCommand.empty())
+        {
+            break;
+        }
+
         if (parsedCommand[0] == echoStr)
         {
             onEcho(client_fd, parsedCommand[1]);
@@ -110,6 +115,10 @@ void onConnection(int client_fd)
         else if (parsedCommand[0] == pingStr)
         {
             onPing(client_fd);
+        }
+        else
+        {
+            break;
         }
     }
 
