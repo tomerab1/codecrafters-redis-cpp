@@ -57,7 +57,10 @@ class Parser
             return false;
         }
 
-        command = command.substr(crlfIndex);
+        if (command.length() > crlfIndex)
+        {
+            command = command.substr(crlfIndex);
+        }
         return true;
     }
 
