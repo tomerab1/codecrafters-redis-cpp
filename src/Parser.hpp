@@ -1,8 +1,6 @@
-#include <chrono>
 #include <iostream>
-#include <string.h>
+#include <stdexcept>
 #include <string>
-#include <thread>
 #include <unordered_map>
 #include <vector>
 
@@ -58,6 +56,10 @@ class Parser
     static void handleRESPCRLF(std::string& command)
     {
         auto crlfIndex = command.find("\r\n");
+        if (crlfIndex == std::string::npos)
+        {
+            throw std::invalid_argument("CRLF not found");
+        }
         command = command.substr(crlfIndex + 2);
     }
 
@@ -94,13 +96,22 @@ class Parser
                     handleRESPArray(commandCpy);
                     break;
                 case RESPDataType::BULK_STRING:
-                    res.emplace_back(handleRESPBulkString(commandCpy));
+                    try
+                    {
+                        res.emplace_back(handleRESPBulkString(commandCpy));
+                    }
+                    catch (const std::invalid_argument& e)
+                    {
+                        std::cerr << "Error parsing bulk string: " << e.what()
+                                  << '\n';
+                        return {};
+                    }
                     break;
                 case RESPDataType::CRLF:
                     handleRESPCRLF(commandCpy);
                     break;
                 default:
-                    std::cout << "Unexpected byte " << commandCpy << '\n';
+                    std::cerr << "Unexpected byte " << commandCpy << '\n';
                     isUnknownByte = true;
                     break;
             }
@@ -114,6 +125,10 @@ class Parser
             else if (mapByteToType.find(nextTwoBytes) != mapByteToType.end())
             {
                 type = mapByteToType.find(nextTwoBytes)->second;
+            }
+            else
+            {
+                throw std::invalid_argument("Unknown byte sequence");
             }
         }
 
