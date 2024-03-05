@@ -1,8 +1,12 @@
+#include <chrono>
 #include <iostream>
 #include <string.h>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <vector>
+
+using namespace std::chrono_literals;
 
 class Parser
 {
@@ -43,50 +47,35 @@ class Parser
          {">", RESPDataType::PUSHES},
          {"\r\n", RESPDataType::CRLF}};
 
-    static constexpr std::size_t LEN_CRLF_BYTES = 2;
-
   public:
     static bool handleRESPArray(std::string& command)
     {
         command = command.substr(1);
-        auto crlfIndex = command.find("\r\n");
-
-        if (crlfIndex == std::string::npos)
-        {
-            std::cout << "Invalid RESPArray (CRLF not found)\n";
-            return false;
-        }
-
-        if (command.length() > crlfIndex)
-        {
-            command = command.substr(crlfIndex);
-        }
+        handleRESPCRLF(command);
         return true;
     }
 
     static void handleRESPCRLF(std::string& command)
     {
-        command = command.substr(LEN_CRLF_BYTES);
+        auto crlfIndex = command.find("\r\n");
+        command = command.substr(crlfIndex + 2);
     }
 
     static std::string handleRESPBulkString(std::string& command)
     {
         std::string str;
-        command = command.substr(1);
+        handleRESPCRLF(command);
 
+        auto it = command.begin();
         std::size_t toAdvance = 0;
-        for (auto it = command.begin(); it != command.end(); it++)
+        while (*it != '\r' && *it != '\n' && it != command.end())
         {
-            if (*it != '\r' && *it != '\n')
-            {
-                str += *it;
-            }
+            str += *it;
+            it++;
             toAdvance++;
         }
-        if (command.length() > toAdvance)
-        {
-            command = command.substr(toAdvance);
-        }
+
+        command = command.substr(toAdvance);
         return str;
     }
 
@@ -97,7 +86,7 @@ class Parser
         std::vector<std::string> res;
         bool isUnknownByte = false;
 
-        while (!command.empty() && !isUnknownByte)
+        while (!commandCpy.empty() && !isUnknownByte)
         {
             switch (type)
             {
