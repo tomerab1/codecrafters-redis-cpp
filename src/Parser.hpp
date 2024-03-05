@@ -124,10 +124,6 @@ class Parser
             {
                 type = mapByteToType.find(nextTwoBytes)->second;
             }
-            else
-            {
-                throw std::invalid_argument("Unknown byte sequence");
-            }
         }
 
         return res;
