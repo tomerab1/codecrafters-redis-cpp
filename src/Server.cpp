@@ -22,6 +22,14 @@ class RedisServer
     RedisServer(int port) : port(port)
     {}
 
+    ~RedisServer()
+    {
+        for (auto&& thread : workerThreads)
+        {
+            thread.join();
+        }
+    }
+
     void start()
     {
         if (!createServerSocket())
@@ -48,6 +56,7 @@ class RedisServer
   private:
     int server_fd;
     int port;
+    std::vector<std::thread> workerThreads;
 
     bool createServerSocket()
     {
@@ -88,8 +97,7 @@ class RedisServer
             }
             else
             {
-                std::thread(&RedisServer::handleConnection, this, client_fd)
-                    .detach();
+                workerThreads.emplace_back(handleConnection, client_fd);
             }
         }
     }
