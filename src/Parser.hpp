@@ -46,67 +46,82 @@ class Parser
     static constexpr std::size_t LEN_CRLF_BYTES = 2;
 
   public:
+    static bool handleRESPArray(std::string& command)
+    {
+        command = command.substr(1);
+        auto crlfIndex = command.find("\r\n");
+
+        if (crlfIndex == std::string::npos)
+        {
+            std::cout << "Invalid RESPArray (CRLF not found)\n";
+            return false;
+        }
+
+        command = command.substr(crlfIndex);
+        return true;
+    }
+
+    static void handleRESPCRLF(std::string& command)
+    {
+        command = command.substr(LEN_CRLF_BYTES);
+    }
+
+    static std::string handleRESPBulkString(std::string& command)
+    {
+        std::string str;
+        command = command.substr(1);
+
+        std::size_t toAdvance = 0;
+        for (auto it = command.begin(); it != command.end(); it++)
+        {
+            if (*it != '\r' && *it != '\n')
+            {
+                str += *it;
+            }
+            toAdvance++;
+        }
+        if (command.length() > toAdvance)
+        {
+            command = command.substr(toAdvance);
+        }
+        return str;
+    }
+
     static std::vector<std::string> parseCommand(const std::string& command)
     {
-        const char* rawStr = command.c_str();
-        auto type = mapByteToType[std::string(1, *rawStr)];
+        std::string commandCpy = command;
+        auto type = mapByteToType[commandCpy.substr(0, 1)];
         std::vector<std::string> res;
-        int numOfArguments = 0;
         bool isUnknownByte = false;
 
-        while (*rawStr && !isUnknownByte)
+        while (!command.empty() && !isUnknownByte)
         {
             switch (type)
             {
-                case RESPDataType::BULK_STRING: {
-                    rawStr++;
-                    std::size_t afterInt = 0;
-                    numOfArguments = std::stoi(rawStr, &afterInt);
-                    rawStr += afterInt + LEN_CRLF_BYTES;
-                    std::string bulkString;
-
-                    while (*rawStr && *(rawStr + 1) && *rawStr != '\r' &&
-                           *(rawStr + 1) != '\n')
-                    {
-                        bulkString += *rawStr;
-                        rawStr++;
-                    }
-
-                    res.emplace_back(std::move(bulkString));
-                }
-                break;
-                case RESPDataType::ARRAY: {
-                    rawStr++;
-                    std::size_t afterInt = 0;
-                    numOfArguments = std::stoi(rawStr, &afterInt);
-                    rawStr += afterInt + LEN_CRLF_BYTES;
-                }
-                break;
+                case RESPDataType::ARRAY:
+                    handleRESPArray(commandCpy);
+                    break;
+                case RESPDataType::BULK_STRING:
+                    res.emplace_back(handleRESPBulkString(commandCpy));
+                    break;
                 case RESPDataType::CRLF:
-                    rawStr += LEN_CRLF_BYTES;
+                    handleRESPCRLF(commandCpy);
                     break;
                 default:
-                    std::cout << "Unexpected byte " << *(rawStr + 1) << '\n';
+                    std::cout << "Unexpected byte " << commandCpy << '\n';
                     isUnknownByte = true;
                     break;
             }
-            if (mapByteToType.find(std::string(1, *rawStr)) !=
-                mapByteToType.end())
+            auto nextByte = commandCpy.substr(0, 1);
+            auto nextTwoBytes = commandCpy.substr(0, 2);
+
+            if (mapByteToType.find(nextByte) != mapByteToType.end())
             {
-                type = mapByteToType.find(std::string(1, *rawStr))->second;
+                type = mapByteToType.find(nextByte)->second;
             }
-            else if (mapByteToType.find(std::string(1, *rawStr) +
-                                        std::string(1, *(rawStr + 1))) !=
-                     mapByteToType.end())
+            else if (mapByteToType.find(nextTwoBytes) != mapByteToType.end())
             {
-                type = mapByteToType
-                           .find(std::string(1, *rawStr) +
-                                 std::string(1, *(rawStr + 1)))
-                           ->second;
-            }
-            else
-            {
-                isUnknownByte = true;
+                type = mapByteToType.find(nextTwoBytes)->second;
             }
         }
 
