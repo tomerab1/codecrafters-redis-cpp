@@ -133,11 +133,6 @@ class RedisServer
                 break;
             }
 
-            std::transform(parsedCommand[0].begin(),
-                           parsedCommand[0].end(),
-                           parsedCommand[0].begin(),
-                           ::tolower);
-
             if (parsedCommand[0] == ECHO_STR)
             {
                 onEcho(client_fd, parsedCommand);
@@ -197,7 +192,31 @@ class RedisServer
         }
         else
         {
-            auto response = keyValueStore.set(command[1], command[2]);
+            std::string response = "";
+            if (std::find(command.begin(), command.end(), "px") ==
+                command.end())
+            {
+                response = keyValueStore.set(command[1], command[2]);
+            }
+            else
+            {
+                if (command.size() < 4)
+                {
+                    auto response = ResponseBuilder::error(
+                        "ERR wrong number of arguments for command");
+                    if (send(client_fd, response.data(), response.length(), 0) <
+                        0)
+                    {
+                        std::cerr
+                            << "Could not send ERROR response to client\n";
+                    }
+                }
+                else
+                {
+                    response =
+                        keyValueStore.set(command[1], command[2], command[4]);
+                }
+            }
             if (send(client_fd, response.data(), response.length(), 0) < 0)
             {
                 std::cerr << "Could not send SET response to client\n";

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <iostream>
 #include <stdexcept>
 #include <string>
@@ -86,6 +87,11 @@ class Parser
         auto type = mapByteToType[commandCpy.substr(0, 1)];
         std::vector<std::string> res;
         bool isUnknownByte = false;
+
+        std::transform(commandCpy.begin(),
+                       commandCpy.end(),
+                       commandCpy.begin(),
+                       ::tolower);
 
         try
         {
