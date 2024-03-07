@@ -63,8 +63,6 @@ class KeyValueStore
             auto vwe =
                 std::get<ValueEntry::ValueWithExpiry>(value->second.value);
 
-            std::cout << vwe.tp - std::chrono::system_clock::now() << "\n";
-
             if (vwe.tp - std::chrono::system_clock::now() <=
                 std::chrono::milliseconds::zero())
             {
