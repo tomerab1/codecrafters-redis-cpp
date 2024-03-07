@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <arpa/inet.h>
 #include <cstring>
-#include <format>
 #include <iostream>
 #include <netinet/in.h>
 #include <optional>
@@ -115,8 +114,7 @@ class RedisServer
                 char ipAddr[INET_ADDRSTRLEN];
                 inet_ntop(
                     AF_INET, &client_addr.sin_addr, ipAddr, INET_ADDRSTRLEN);
-                std::cout << std::format(
-                    "New connection from: {}:{}\n", ipAddr, port);
+                std::cout << "New connection from: " << ipAddr << port << "\n";
                 workerThreads.emplace_back(
                     &RedisServer::handleConnection, this, client_fd);
             }

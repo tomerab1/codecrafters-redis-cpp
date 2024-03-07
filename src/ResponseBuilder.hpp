@@ -1,5 +1,4 @@
 #pragma once
-#include <format>
 #include <string>
 
 class ResponseBuilder
@@ -17,11 +16,11 @@ class ResponseBuilder
 
     static std::string error(const std::string& err)
     {
-        return std::format("-{}\r\n", err);
+        return "-" + err + "\r\n";
     }
 
     static std::string bulkString(const std::string& str)
     {
-        return std::format("${}\r\n{}\r\n", std::to_string(str.length()), str);
+        return "$" + std::to_string(str.length()) + "\r\n" + str + "\r\n";
     }
 };
