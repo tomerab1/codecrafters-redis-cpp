@@ -52,10 +52,8 @@ class ProgramOptions
                 return std::any_cast<T>(
                     value->second.transformFn.value()(value->second.value));
             }
-            catch (const std::bad_any_cast& e)
-            {
-                throw e;
-            }
+            catch (...)
+            {}
         }
         if (value->second.defaultValue)
         {
@@ -65,7 +63,8 @@ class ProgramOptions
             }
             catch (const std::bad_any_cast& e)
             {
-                throw e;
+                std::logic_error(
+                    "Error: default value is of different type from type T");
             }
         }
 

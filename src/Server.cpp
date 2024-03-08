@@ -6,14 +6,7 @@
 
 std::any strToInt(std::string_view s)
 {
-    try
-    {
-        return std::stoi(std::string(s));
-    }
-    catch (std::invalid_argument& e)
-    {
-        throw e;
-    }
+    return std::stoi(std::string(s));
 }
 
 int main(int argc, char** argv)
@@ -34,8 +27,12 @@ int main(int argc, char** argv)
         {
             port = po.get<int>("--port").value();
         }
+        else
+        {
+            port = po.get<int>("--port").value();
+        }
 
-        RedisServer server(6379);
+        RedisServer server(port);
         server.start();
     }
     catch (std::exception& e)
