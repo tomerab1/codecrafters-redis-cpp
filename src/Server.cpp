@@ -27,10 +27,6 @@ int main(int argc, char** argv)
         {
             port = po.get<int>("--port").value();
         }
-        else
-        {
-            port = po.get<int>("--port").value();
-        }
 
         RedisServer server(port);
         server.start();
