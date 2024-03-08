@@ -13,13 +13,6 @@
 #include <unistd.h>
 #include <vector>
 
-static constexpr std::string PING_STR = "ping";
-static constexpr std::string SET_STR = "set";
-static constexpr std::string GET_STR = "get";
-static constexpr std::string ECHO_STR = "echo";
-static constexpr std::string PONG_STR = "+PONG\r\n";
-static constexpr int MAX_BUFFER = 4096;
-
 class KeyValueStore;
 
 class RedisServer
