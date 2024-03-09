@@ -25,6 +25,7 @@ class RedisServer
   private:
     int server_fd;
     int port;
+    std::string role {"master"};
     std::vector<std::thread> workerThreads;
     std::unique_ptr<KeyValueStore> keyValueStore;
 
@@ -38,6 +39,10 @@ class RedisServer
     void onEcho(int client_fd, const std::vector<std::string>& command);
     void onSet(int client_fd, const std::vector<std::string>& command);
     void onGet(int client_fd, const std::vector<std::string>& command);
+    void onInvalidArgs(int client_fd, const std::vector<std::string>& command);
+    void onInfo(int client_fd, const std::vector<std::string>& command);
+    void onInvalidCommand(int client_fd,
+                          const std::vector<std::string>& command);
 
     std::optional<std::string> readFromSocket(int client_fd);
 };

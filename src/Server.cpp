@@ -28,6 +28,8 @@ int main(int argc, char** argv)
             port = po.get<int>("--port").value();
         }
 
+        std::cout << "Listening on port " << port << "...\n";
+
         RedisServer server(port);
         server.start();
     }

@@ -8,6 +8,7 @@ static constexpr std::string PING_STR = "ping";
 static constexpr std::string SET_STR = "set";
 static constexpr std::string GET_STR = "get";
 static constexpr std::string ECHO_STR = "echo";
+static constexpr std::string INFO_STR = "info";
 static constexpr std::string PONG_STR = "+PONG\r\n";
 static constexpr int MAX_BUFFER = 4096;
 
@@ -129,9 +130,13 @@ void RedisServer::handleConnection(int client_fd)
         {
             onGet(client_fd, parsedCommand);
         }
+        else if (parsedCommand[0] == INFO_STR)
+        {
+            onInfo(client_fd, parsedCommand);
+        }
         else
         {
-            break;
+            onInvalidCommand(client_fd, parsedCommand);
         }
     }
 
@@ -150,7 +155,7 @@ void RedisServer::onEcho(int client_fd, const std::vector<std::string>& command)
 {
     if (command.size() < 2)
     {
-        return;
+        onInvalidArgs(client_fd, command);
     }
     std::string response = ResponseBuilder::bulkString(command[1]);
     if (send(client_fd, response.data(), response.length(), 0) < 0)
@@ -163,12 +168,7 @@ void RedisServer::onSet(int client_fd, const std::vector<std::string>& command)
 {
     if (command.size() < 3)
     {
-        auto response =
-            ResponseBuilder::error("ERR wrong number of arguments for command");
-        if (send(client_fd, response.data(), response.length(), 0) < 0)
-        {
-            std::cerr << "Could not send ERROR response to client\n";
-        }
+        onInvalidArgs(client_fd, command);
     }
     else
     {
@@ -181,12 +181,7 @@ void RedisServer::onSet(int client_fd, const std::vector<std::string>& command)
         {
             if (command.size() < 4)
             {
-                auto response = ResponseBuilder::error(
-                    "ERR wrong number of arguments for command");
-                if (send(client_fd, response.data(), response.length(), 0) < 0)
-                {
-                    std::cerr << "Could not send ERROR response to client\n";
-                }
+                onInvalidArgs(client_fd, command);
             }
             else
             {
@@ -205,12 +200,7 @@ void RedisServer::onGet(int client_fd, const std::vector<std::string>& command)
 {
     if (command.size() < 2)
     {
-        auto response =
-            ResponseBuilder::error("ERR wrong number of arguments for command");
-        if (send(client_fd, response.data(), response.length(), 0) < 0)
-        {
-            std::cerr << "Could not send ERROR response to client\n";
-        }
+        onInvalidArgs(client_fd, command);
     }
     else
     {
@@ -219,6 +209,44 @@ void RedisServer::onGet(int client_fd, const std::vector<std::string>& command)
         {
             std::cerr << "Could not send GET response to client\n";
         }
+    }
+}
+
+void RedisServer::onInfo(int client_fd, const std::vector<std::string>& command)
+{
+    if (command.size() < 1)
+    {
+        onInvalidArgs(client_fd, command);
+    }
+    else
+    {
+        auto response = ResponseBuilder::bulkString("role:" + role);
+        if (send(client_fd, response.data(), response.length(), 0) < 0)
+        {
+            std::cerr << "Could not send GET response to client\n";
+        }
+    }
+}
+
+void RedisServer::onInvalidArgs(int client_fd,
+                                const std::vector<std::string>& command)
+{
+    auto response =
+        ResponseBuilder::error("ERR wrong number of arguments for command");
+    if (send(client_fd, response.data(), response.length(), 0) < 0)
+    {
+        std::cerr << "Could not send ERROR response to client\n";
+    }
+}
+
+void RedisServer::onInvalidCommand(int client_fd,
+                                   const std::vector<std::string>& command)
+{
+    auto response = ResponseBuilder::error("ERR \"" + command[0] +
+                                           "\" is not valid command");
+    if (send(client_fd, response.data(), response.length(), 0) < 0)
+    {
+        std::cerr << "Could not send ERROR response to client\n";
     }
 }
 
