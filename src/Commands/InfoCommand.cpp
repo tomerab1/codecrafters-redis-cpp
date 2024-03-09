@@ -15,7 +15,7 @@ void InfoCommand::execute(int clientFd,
     }
     else
     {
-        std::string toEncode = "role:" + serverInstance->getRole() + "\r\n";
+        std::string toEncode = "role:" + serverInstance->getRole();
         auto response = ResponseBuilder::bulkString(toEncode);
 
         if (send(clientFd, response.data(), response.length(), 0) < 0)
