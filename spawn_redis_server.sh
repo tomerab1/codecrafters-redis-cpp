@@ -8,4 +8,4 @@
 set -e
 cmake . >/dev/null
 make >/dev/null
-exec ./server --replicaof localhost 6379"$@"
+exec ./server "$@"
