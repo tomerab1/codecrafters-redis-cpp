@@ -11,6 +11,7 @@
 #include <sys/socket.h>
 #include <thread>
 #include <unistd.h>
+#include <unordered_map>
 #include <vector>
 
 class KeyValueStore;
@@ -30,18 +31,18 @@ class RedisServer
 
     inline void setRole(const std::string& role)
     {
-        this->role = role;
+        instanceInfo["role"] = role;
     }
 
     inline std::string getRole()
     {
-        return role;
+        return instanceInfo["role"];
     }
 
   private:
     int serverFd;
     int port;
-    std::string role {"master"};
+    std::unordered_map<std::string, std::string> instanceInfo;
     std::vector<std::thread> workerThreads;
     std::unique_ptr<KeyValueStore> keyValueStore;
     std::unique_ptr<CommandDispatcher> cmdDispatcher;

@@ -15,8 +15,9 @@ void InfoCommand::execute(int clientFd,
     }
     else
     {
-        auto response =
-            ResponseBuilder::bulkString("role:" + serverInstance->getRole());
+        std::string toEncode = "role:" + serverInstance->getRole() + "\r\n";
+
+        auto response = ResponseBuilder::bulkString(toEncode);
         if (send(clientFd, response.data(), response.length(), 0) < 0)
         {
             std::cerr << "Could not send GET response to client\n";
