@@ -14,6 +14,7 @@
 #include <vector>
 
 class KeyValueStore;
+class CommandDispatcher;
 
 class RedisServer
 {
@@ -22,27 +23,29 @@ class RedisServer
     ~RedisServer();
     void start();
 
+    inline KeyValueStore* getKVStore()
+    {
+        return keyValueStore.get();
+    }
+
+    inline std::string getRole()
+    {
+        return role;
+    }
+
   private:
-    int server_fd;
+    int serverFd;
     int port;
     std::string role {"master"};
     std::vector<std::thread> workerThreads;
     std::unique_ptr<KeyValueStore> keyValueStore;
+    std::unique_ptr<CommandDispatcher> cmdDispatcher;
 
     bool createServerSocket();
     bool bindServer();
     bool listenForConnections();
     void acceptConnections();
-
-    void handleConnection(int client_fd);
-    void onPing(int client_fd);
-    void onEcho(int client_fd, const std::vector<std::string>& command);
-    void onSet(int client_fd, const std::vector<std::string>& command);
-    void onGet(int client_fd, const std::vector<std::string>& command);
-    void onInvalidArgs(int client_fd, const std::vector<std::string>& command);
-    void onInfo(int client_fd, const std::vector<std::string>& command);
-    void onInvalidCommand(int client_fd,
-                          const std::vector<std::string>& command);
+    void handleConnection(int clientFd);
 
     std::optional<std::string> readFromSocket(int client_fd);
 };
