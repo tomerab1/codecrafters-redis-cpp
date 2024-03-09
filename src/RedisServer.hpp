@@ -28,6 +28,11 @@ class RedisServer
         return keyValueStore.get();
     }
 
+    inline void setRole(const std::string& role)
+    {
+        this->role = role;
+    }
+
     inline std::string getRole()
     {
         return role;

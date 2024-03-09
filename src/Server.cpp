@@ -49,7 +49,7 @@ int main(int argc, char** argv)
         po.parse(argc, argv);
 
         int port;
-        ReplicaOfParams repOfParams;
+        ReplicaOfParams replicaof;
 
         if (po.hasOption("--port"))
         {
@@ -59,18 +59,20 @@ int main(int argc, char** argv)
                 port = value.value();
             }
         }
+
+        std::cout << "Listening on port " << port << "...\n";
+
+        RedisServer server(port);
+
         if (po.hasOption("--replicaof"))
         {
             auto value = po.get<ReplicaOfParams>("--replicaof");
             if (value.has_value())
             {
-                repOfParams = value.value();
+                server.setRole("slave");
             }
         }
 
-        std::cout << "Listening on port " << port << "...\n";
-
-        RedisServer server(port);
         server.start();
     }
     catch (std::exception& e)

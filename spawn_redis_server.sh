@@ -8,4 +8,4 @@
 set -e
 cmake . >/dev/null
 make >/dev/null
-exec ./server "$@"
+exec ./server --port 6379 --replicaof localhost 6379"$@"
