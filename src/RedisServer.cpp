@@ -52,8 +52,11 @@ bool RedisServer::createServerSocket()
 bool RedisServer::bindServer()
 {
     int reuse = 1;
-    if (setsockopt(serverFd, SOL_SOCKET, SO_REUSEPORT, &reuse, sizeof(reuse)) <
-        0)
+    if (setsockopt(serverFd,
+                   SOL_SOCKET,
+                   SO_REUSEADDR | SO_REUSEPORT,
+                   &reuse,
+                   sizeof(reuse)) < 0)
     {
         std::cerr << "setsockopt failed\n";
         return false;
