@@ -17,8 +17,9 @@ class ProgramOptions
     {
         std::string_view shortName {""};
         std::string_view longName {""};
-        std::string_view value {""};
-        std::optional<std::function<std::any(std::string_view)> > transformFn {
+        std::optional<std::string> value {std::nullopt};
+        int numOfParams {1};
+        std::optional<std::function<std::any(std::string)> > transformFn {
             std::nullopt};
         std::optional<std::any> defaultValue {std::nullopt};
     };
@@ -45,17 +46,19 @@ class ProgramOptions
                                    "does not exist");
         }
 
-        if (value->second.transformFn)
+        if (value->second.transformFn && value->second.value != std::nullopt)
         {
             try
             {
-                return std::any_cast<T>(
-                    value->second.transformFn.value()(value->second.value));
+                return std::any_cast<T>(value->second.transformFn.value()(
+                    value->second.value.value()));
             }
-            catch (...)
-            {}
+            catch (std::exception& e)
+            {
+                throw std::logic_error("Error: transform function failed");
+            }
         }
-        if (value->second.defaultValue)
+        if (value->second.defaultValue != std::nullopt)
         {
             try
             {

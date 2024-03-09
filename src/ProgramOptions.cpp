@@ -41,7 +41,19 @@ void ProgramOptions::parse(int argc, char** argv)
             {
                 if (i + 1 < argc)
                 {
-                    progOptionMap[argv[i]].value = argv[i + 1];
+                    isKey->second.value = "";
+                    for (int j = 1; j <= progOptionMap[argv[i]].numOfParams;
+                         j++)
+                    {
+                        if (i + j > argc)
+                        {
+                            throw std::logic_error("To many arguments for \"" +
+                                                   std::string(argv[i]) + "\"");
+                        }
+
+                        progOptionMap[argv[i]].value.value() +=
+                            std::string(argv[i + j]) + ",";
+                    }
                 }
                 else
                 {
