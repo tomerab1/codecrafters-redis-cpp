@@ -20,7 +20,7 @@ void InfoCommand::execute(int clientFd,
 
         if (send(clientFd, response.data(), response.length(), 0) < 0)
         {
-            std::cerr << "Could not send GET response to client\n";
+            std::cerr << "Could not send INFO response to client\n";
         }
     }
 }

@@ -71,6 +71,10 @@ int main(int argc, char** argv)
             {
                 server.setRole("slave");
             }
+            else
+            {
+                server.setRole("master");
+            }
         }
 
         server.start();
