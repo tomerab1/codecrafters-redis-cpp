@@ -23,7 +23,7 @@ class RedisServer
   public:
     RedisServer(int port, bool isMaster);
     ~RedisServer();
-    void start();
+    void start(int masterPort = 0, const std::string& masterAddr = "");
     void connectToMaster(int masterPort, const std::string& masterAddr);
     void handshake(int masterPort, const std::string& masterAddr);
 

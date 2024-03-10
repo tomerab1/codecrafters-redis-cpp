@@ -30,7 +30,7 @@ RedisServer::~RedisServer()
     }
 }
 
-void RedisServer::start()
+void RedisServer::start(int masterPort, const std::string& masterAddr)
 {
     if (!createServerSocket())
     {
@@ -52,7 +52,7 @@ void RedisServer::start()
 
     if (replInfo->getRole() != "master")
     {
-        handshake(6379, "localhost");
+        handshake(masterPort, masterAddr);
     }
 
     acceptConnections();

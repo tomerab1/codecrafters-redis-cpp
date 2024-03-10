@@ -66,13 +66,22 @@ int main(int argc, char** argv)
             if (value.has_value())
             {
                 isMaster = false;
+                replicaof = value.value();
             }
         }
 
         std::cout << "Listening on port " << port << "...\n";
 
         RedisServer server(port, isMaster);
-        server.start();
+
+        if (isMaster)
+        {
+            server.start();
+        }
+        else
+        {
+            server.start(replicaof.port, replicaof.hostName);
+        }
     }
     catch (std::exception& e)
     {
