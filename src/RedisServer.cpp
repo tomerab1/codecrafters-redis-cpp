@@ -93,8 +93,6 @@ void RedisServer::handshake(int masterPort, const std::string& masterAddr)
             std::unordered_map<std::string, std::string>;
 
         connectToMaster(masterPort, masterAddr);
-        sendCommandToMaster("ping");
-
         handshakeCommands_t handshakeCommands {
             {"ping", {}},
             {"replconf", {"listening-port", std::to_string(port)}},
