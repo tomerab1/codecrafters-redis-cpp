@@ -20,7 +20,7 @@ class Command
     {
         auto response =
             ResponseBuilder::error("ERR wrong number of arguments for command");
-        if (send(client_fd, response.data(), response.length(), 0) < 0)
+        if (send(client_fd, response.c_str(), response.length(), 0) < 0)
         {
             std::cerr << "Could not send ERROR response to client\n";
         }
