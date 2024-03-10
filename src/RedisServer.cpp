@@ -87,36 +87,31 @@ void RedisServer::handshake(int masterPort, const std::string& masterAddr)
 {
     try
     {
+        using handshakeCommands_t =
+            std::vector<std::pair<std::string, std::vector<std::string> > >;
+        using handshakeExpectedRes_t =
+            std::unordered_map<std::string, std::string>;
+
         connectToMaster(masterPort, masterAddr);
         sendCommandToMaster("ping");
 
-        auto response = readFromSocket(masterFd);
-        if (response.has_value() &&
-            response.value().find("PONG") != std::string::npos)
-        {
-            // Send REPLCONF (1st) to master
-            sendCommandToMaster("replconf",
-                                {"listening-port", std::to_string(port)});
+        handshakeCommands_t handshakeCommands {
+            {"ping", {}},
+            {"replconf", {"listening-port", std::to_string(port)}},
+            {"replconf", {"capa", "psync2"}},
+            {"psync", {"?", "-1"}}};
 
-            // Read OK response from master
-            response = readFromSocket(masterFd);
+        handshakeExpectedRes_t handshakeExpectedRes = {
+            {"ping", "+PONG"}, {"replconf", "+OK"}, {"psync", "+FULLRESYNC"}};
+
+        for (auto [commandName, args] : handshakeCommands)
+        {
+            sendCommandToMaster(commandName, args);
+            auto response = readFromSocket(masterFd);
             if (response.has_value() &&
-                response.value().find("OK") != std::string::npos)
+                response.value().find(handshakeExpectedRes[commandName]) !=
+                    std::string::npos)
             {
-                // Send REPLCONF (2nd) to master
-                sendCommandToMaster("replconf", {"capa", "psync2"});
-                response = readFromSocket(masterFd);
-                if (response.has_value() &&
-                    response.value().find("OK") != std::string::npos)
-                {
-                    sendCommandToMaster("psync", {"?", "-1"});
-                    response = readFromSocket(masterFd);
-                    if (response.has_value() &&
-                        response.value().find("+FULLRESYNC") !=
-                            std::string::npos)
-                    {
-                    }
-                }
             }
         }
     }
