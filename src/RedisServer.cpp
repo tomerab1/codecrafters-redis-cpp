@@ -6,6 +6,8 @@
 #include "Replication/ReplicationInfo.hpp"
 #include "ResponseBuilder.hpp"
 
+#include <algorithm>
+
 static constexpr int MAX_BUFFER = 4096;
 
 RedisServer::RedisServer(int port, bool isMaster) :
@@ -86,44 +88,45 @@ void RedisServer::handshake(int masterPort, const std::string& masterAddr)
     try
     {
         connectToMaster(masterPort, masterAddr);
-        auto pingReq = ResponseBuilder::array({"ping"});
+        sendCommandToMaster("ping");
 
-        if (send(masterFd, pingReq.c_str(), pingReq.length(), 0) < 0)
+        auto response = readFromSocket(masterFd);
+        if (response.has_value() &&
+            response.value().find("PONG") != std::string::npos)
         {
-            std::runtime_error("Could not send PING to master");
-        }
+            // Send REPLCONF (1st) to master
+            sendCommandToMaster("replconf",
+                                {"listening-port", std::to_string(port)});
 
-        std::optional<std::string> buffer;
-        if ((buffer = readFromSocket(masterFd)).value().find("PONG") !=
-            std::string::npos)
-        {
-            auto replconfReq1 = ResponseBuilder::array(
-                {"replconf", "listening-port", std::to_string(port)});
-
-            if (send(masterFd, replconfReq1.c_str(), replconfReq1.length(), 0) <
-                0)
+            // Read OK response from master
+            response = readFromSocket(masterFd);
+            if (response.has_value() &&
+                response.value().find("OK") != std::string::npos)
             {
-                std::runtime_error("Could not send REPLCONF (1st) to master");
-            }
-            if ((buffer = readFromSocket(masterFd)).value().find("OK") !=
-                std::string::npos)
-            {
-                auto replconfReq2 =
-                    ResponseBuilder::array({"replconf", "capa", "psync2"});
-                if (send(masterFd,
-                         replconfReq2.c_str(),
-                         replconfReq2.length(),
-                         0) < 0)
-                {
-                    std::runtime_error(
-                        "Could not send REPLCONF (2nd) to master");
-                }
+                // Send REPLCONF (2nd) to master
+                sendCommandToMaster("replconf", {"capa", "psync2"});
             }
         }
     }
     catch (std::runtime_error& e)
     {
         throw e;
+    }
+}
+
+void RedisServer::sendCommandToMaster(const std::string& command,
+                                      const std::vector<std::string>& args = {})
+{
+    std::vector<std::string> commandVector {command};
+    std::transform(args.begin(),
+                   args.end(),
+                   std::back_inserter(args),
+                   [](auto& arg) { return arg; });
+    auto commandReq = ResponseBuilder::array(commandVector);
+
+    if (send(masterFd, commandReq.c_str(), commandReq.length(), 0) < 0)
+    {
+        throw std::runtime_error("Could not send command to master");
     }
 }
 

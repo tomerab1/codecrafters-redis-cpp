@@ -24,8 +24,6 @@ class RedisServer
     RedisServer(int port, bool isMaster);
     ~RedisServer();
     void start(int masterPort = 0, const std::string& masterAddr = "");
-    void connectToMaster(int masterPort, const std::string& masterAddr);
-    void handshake(int masterPort, const std::string& masterAddr);
 
     inline KeyValueStore* getKVStore()
     {
@@ -53,6 +51,11 @@ class RedisServer
     bool listenForConnections();
     void acceptConnections();
     void handleConnection(int clientFd);
+
+    void connectToMaster(int masterPort, const std::string& masterAddr);
+    void handshake(int masterPort, const std::string& masterAddr);
+    void sendCommandToMaster(const std::string& command,
+                             const std::vector<std::string>& args = {});
 
     std::optional<std::string> readFromSocket(int client_fd);
 };
