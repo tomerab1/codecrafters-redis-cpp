@@ -23,11 +23,11 @@ RedisServer::RedisServer(int port, bool isMaster) :
 }
 
 RedisServer::~RedisServer()
-
-    for (auto&& thread : workerThreads)
 {
-    thread.join();
-}
+    for (auto&& thread : workerThreads)
+    {
+        thread.join();
+    }
 }
 
 void RedisServer::start()
