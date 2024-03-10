@@ -13,6 +13,6 @@ void ReplConfCommand::execute(int clientFd,
 
     if (send(clientFd, response.data(), response.length(), 0) < 0)
     {
-        std::cerr << "Could not send SET response to client\n";
+        std::cerr << "Could not send REPLCONF response to client\n";
     }
 }
