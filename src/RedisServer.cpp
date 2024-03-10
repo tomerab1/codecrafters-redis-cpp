@@ -99,10 +99,8 @@ void RedisServer::handshake(int masterPort, const std::string& masterAddr)
             {"replconf", {"capa", "psync2"}},
             {"psync", {"?", "-1"}}};
 
-        handshakeExpectedRes_t handshakeExpectedRes =
-        { {"ping", "+PONG"},
-          {"replconf", "+OK"},
-          {"psync", "+FULLRESYNC"} }
+        handshakeExpectedRes_t handshakeExpectedRes = {
+            {"ping", "+PONG"}, {"replconf", "+OK"}, {"psync", "+FULLRESYNC"}};
 
         for (auto [commandName, args] : handshakeCommands)
         {
