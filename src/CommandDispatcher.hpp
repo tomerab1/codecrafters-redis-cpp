@@ -6,6 +6,7 @@
 #include "Commands/InvalidCommand.hpp"
 #include "Commands/PSyncCommand.hpp"
 #include "Commands/PingCommand.hpp"
+#include "Commands/ReplConfCommand.hpp"
 #include "Commands/SetCommand.hpp"
 #include "RedisServer.hpp"
 
@@ -37,12 +38,13 @@ class CommandDispatcher
   private:
     std::unordered_map<std::string, std::shared_ptr<Command> > strToCommandMap {
         {
-            {"echo", std::make_shared<EchoCommand>()},
-            {"ping", std::make_shared<PingCommand>()},
-            {"set", std::make_shared<SetCommand>()},
-            {"get", std::make_shared<GetCommand>()},
-            {"info", std::make_shared<InfoCommand>()},
-            {"psync", std::make_shared<PSyncCommand>()},
-            {"invalid", std::make_shared<InvalidCommand>()},
+            {"echo", std::make_unique<EchoCommand>()},
+            {"ping", std::make_unique<PingCommand>()},
+            {"set", std::make_unique<SetCommand>()},
+            {"get", std::make_unique<GetCommand>()},
+            {"info", std::make_unique<InfoCommand>()},
+            {"psync", std::make_unique<PSyncCommand>()},
+            {"replconf", std::make_unique<ReplConfCommand>()},
+            {"invalid", std::make_unique<InvalidCommand>()},
         }};
 };
