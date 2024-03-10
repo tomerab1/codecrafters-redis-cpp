@@ -136,7 +136,7 @@ void RedisServer::sendCommandToMaster(const std::string& command,
     }
 }
 
-bool RedisServer::createServerSocket(
+bool RedisServer::createServerSocket()
 {
     serverFd = socket(AF_INET, SOCK_STREAM, 0);
     return (serverFd >= 0);
