@@ -105,6 +105,18 @@ void RedisServer::handshake(int masterPort, const std::string& masterAddr)
             {
                 // Send REPLCONF (2nd) to master
                 sendCommandToMaster("replconf", {"capa", "psync2"});
+                response = readFromSocket(masterFd);
+                if (response.has_value() &&
+                    response.value().find("OK") != std::string::npos)
+                {
+                    sendCommandToMaster("psync", {"?", "-1"});
+                    response = readFromSocket(masterFd);
+                    if (response.has_value() &&
+                        response.value().find("+FULLRESYNC") !=
+                            std::string::npos)
+                    {
+                    }
+                }
             }
         }
     }

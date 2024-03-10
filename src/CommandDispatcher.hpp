@@ -4,6 +4,7 @@
 #include "Commands/GetCommand.hpp"
 #include "Commands/InfoCommand.hpp"
 #include "Commands/InvalidCommand.hpp"
+#include "Commands/PSyncCommand.hpp"
 #include "Commands/PingCommand.hpp"
 #include "Commands/SetCommand.hpp"
 #include "RedisServer.hpp"
@@ -41,6 +42,7 @@ class CommandDispatcher
             {"set", std::make_shared<SetCommand>()},
             {"get", std::make_shared<GetCommand>()},
             {"info", std::make_shared<InfoCommand>()},
+            {"psync", std::make_shared<PSyncCommand>()},
             {"invalid", std::make_shared<InvalidCommand>()},
         }};
 };

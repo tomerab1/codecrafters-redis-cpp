@@ -12,6 +12,11 @@ std::string ResponseBuilder::nil()
     return "$-1\r\n";
 }
 
+std::string ResponseBuilder::fullresync(const std::string str)
+{
+    return "+FULLRESYNC" + str + "\r\n";
+}
+
 std::string ResponseBuilder::error(const std::string& err)
 {
     return "-" + err + "\r\n";
