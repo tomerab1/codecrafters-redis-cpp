@@ -11,9 +11,12 @@ void EchoCommand::execute(int clientFd,
     {
         onInvalidArgs(clientFd, command);
     }
-    std::string response = ResponseBuilder::bulkString(command[1]);
-    if (send(clientFd, response.data(), response.length(), 0) < 0)
+    else
     {
-        std::cerr << "Could not send ECHO response to client\n";
+        std::string response = ResponseBuilder::bulkString(command[1]);
+        if (send(clientFd, response.c_str(), response.length(), 0) < 0)
+        {
+            std::cerr << "Could not send ECHO response to client\n";
+        }
     }
 }

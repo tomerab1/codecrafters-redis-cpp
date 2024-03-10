@@ -39,7 +39,7 @@ std::vector<std::string> Parser::parseCommand(const std::string& command)
     std::string commandCpy = command;
     auto type = mapByteToType[commandCpy.substr(0, 1)];
     std::vector<std::string> res;
-    bool isUnknownByte = false;
+    bool isUnknownByte {false};
 
     std::transform(
         commandCpy.begin(), commandCpy.end(), commandCpy.begin(), ::tolower);
