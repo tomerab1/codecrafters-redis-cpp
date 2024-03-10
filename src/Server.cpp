@@ -76,7 +76,7 @@ int main(int argc, char** argv)
 
         if (isMaster)
         {
-            server.start()
+            server.start();
         }
         else
         {
