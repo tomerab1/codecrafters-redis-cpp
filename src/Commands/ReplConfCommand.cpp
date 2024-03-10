@@ -15,3 +15,4 @@ void ReplConfCommand::execute(int clientFd,
     {
         std::cerr << "Could not send SET response to client\n";
     }
+}
