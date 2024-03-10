@@ -115,7 +115,7 @@ void RedisServer::handshake(int masterPort, const std::string& masterAddr)
 }
 
 void RedisServer::sendCommandToMaster(const std::string& command,
-                                      const std::vector<std::string>& args = {})
+                                      const std::vector<std::string>& args)
 {
     std::vector<std::string> commandVector {command};
     std::transform(args.begin(),
