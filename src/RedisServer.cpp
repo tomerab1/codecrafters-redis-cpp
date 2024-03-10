@@ -94,7 +94,7 @@ void RedisServer::handshake(int masterPort, const std::string& masterAddr)
         }
 
         std::optional<std::string> buffer;
-        if ((buffer = readFromSocket(masterFd)).value().find("pong") !=
+        if ((buffer = readFromSocket(masterFd)).value().find("PONG") !=
             std::string::npos)
         {
             auto replconfReq1 = ResponseBuilder::array(
@@ -105,7 +105,7 @@ void RedisServer::handshake(int masterPort, const std::string& masterAddr)
             {
                 std::runtime_error("Could not send REPLCONF (1st) to master");
             }
-            if ((buffer = readFromSocket(masterFd)).value().find("ok") !=
+            if ((buffer = readFromSocket(masterFd)).value().find("OK") !=
                 std::string::npos)
             {
                 auto replconfReq2 =
