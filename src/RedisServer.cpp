@@ -90,13 +90,35 @@ void RedisServer::handshake(int masterPort, const std::string& masterAddr)
 
         if (send(masterFd, pingReq.c_str(), pingReq.length(), 0) < 0)
         {
-            std::cerr << "Could not send PONG to client\n";
+            std::runtime_error("Could not send PING to master");
         }
 
         std::optional<std::string> buffer;
-        if ((buffer = readFromSocket(masterFd)) == "+pong\r\n")
+        if ((buffer = readFromSocket(masterFd)).value().find("pong") !=
+            std::string::npos)
         {
-            std::cout << "recv +pong\n";
+            auto replconfReq1 = ResponseBuilder::array(
+                {"replconf", "listening-port", std::to_string(port)});
+
+            if (send(masterFd, replconfReq1.c_str(), replconfReq1.length(), 0) <
+                0)
+            {
+                std::runtime_error("Could not send REPLCONF (1st) to master");
+            }
+            if ((buffer = readFromSocket(masterFd)).value().find("ok") !=
+                std::string::npos)
+            {
+                auto replconfReq2 =
+                    ResponseBuilder::array({"replconf", "capa", "psync2"});
+                if (send(masterFd,
+                         replconfReq2.c_str(),
+                         replconfReq2.length(),
+                         0) < 0)
+                {
+                    std::runtime_error(
+                        "Could not send REPLCONF (2nd) to master");
+                }
+            }
         }
     }
     catch (std::runtime_error& e)

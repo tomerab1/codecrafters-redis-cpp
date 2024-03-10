@@ -4,7 +4,7 @@
 
 std::string ResponseBuilder::ok()
 {
-    return "+OK\r\n";
+    return "+ok\r\n";
 }
 
 std::string ResponseBuilder::nil()
