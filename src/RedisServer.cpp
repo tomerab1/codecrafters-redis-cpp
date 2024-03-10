@@ -30,6 +30,9 @@ RedisServer::~RedisServer()
     {
         thread.join();
     }
+
+    close(masterFd);
+    close(serverFd);
 }
 
 void RedisServer::start(int masterPort, const std::string& masterAddr)
