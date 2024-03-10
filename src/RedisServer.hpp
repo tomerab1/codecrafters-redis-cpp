@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <arpa/inet.h>
+#include <cassert>
 #include <cstring>
 #include <iostream>
 #include <memory>
@@ -11,41 +12,38 @@
 #include <sys/socket.h>
 #include <thread>
 #include <unistd.h>
-#include <unordered_map>
 #include <vector>
 
 class KeyValueStore;
+class ReplicationInfo;
 class CommandDispatcher;
 
 class RedisServer
 {
   public:
-    RedisServer(int port);
+    RedisServer(int port, bool isMaster);
     ~RedisServer();
     void start();
 
     inline KeyValueStore* getKVStore()
     {
+        assert(keyValueStore.get());
         return keyValueStore.get();
     }
 
-    inline void setRole(const std::string& role)
+    inline ReplicationInfo* getReplInfo()
     {
-        instanceInfo["role"] = role;
-    }
-
-    inline std::string getRole()
-    {
-        return instanceInfo["role"];
+        assert(replInfo.get());
+        return replInfo.get();
     }
 
   private:
     int serverFd;
     int port;
-    std::unordered_map<std::string, std::string> instanceInfo;
     std::vector<std::thread> workerThreads;
     std::unique_ptr<KeyValueStore> keyValueStore;
     std::unique_ptr<CommandDispatcher> cmdDispatcher;
+    std::unique_ptr<ReplicationInfo> replInfo;
 
     bool createServerSocket();
     bool bindServer();

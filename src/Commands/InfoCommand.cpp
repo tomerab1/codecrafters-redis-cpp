@@ -2,6 +2,7 @@
 
 #include "../KeyValueStore.hpp"
 #include "../RedisServer.hpp"
+#include "../Replication/ReplicationInfo.hpp"
 
 #include <algorithm>
 
@@ -15,7 +16,7 @@ void InfoCommand::execute(int clientFd,
     }
     else
     {
-        std::string toEncode = "role:" + serverInstance->getRole();
+        auto toEncode = serverInstance->getReplInfo()->toString();
         auto response = ResponseBuilder::bulkString(toEncode);
 
         if (send(clientFd, response.data(), response.length(), 0) < 0)

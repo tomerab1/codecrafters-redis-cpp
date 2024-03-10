@@ -3,14 +3,24 @@
 #include "CommandDispatcher.hpp"
 #include "KeyValueStore.hpp"
 #include "Parser.hpp"
+#include "Replication/ReplicationInfo.hpp"
 #include "ResponseBuilder.hpp"
 
 static constexpr int MAX_BUFFER = 4096;
 
-RedisServer::RedisServer(int port) :
+RedisServer::RedisServer(int port, bool isMaster) :
     port(port), keyValueStore {std::make_unique<KeyValueStore>()},
     cmdDispatcher {std::make_unique<CommandDispatcher>()}
-{}
+{
+    if (isMaster)
+    {
+        replInfo = std::make_unique<ReplicationInfo>("master");
+    }
+    else
+    {
+        replInfo = std::make_unique<ReplicationInfo>("slave");
+    }
+}
 
 RedisServer::~RedisServer()
 {
