@@ -105,20 +105,20 @@ void RedisServer::handshake(int masterPort, const std::string& masterAddr)
             {"ping", "+PONG"}, {"replconf", "+OK"}, {"psync", "+FULLRESYNC"}};
 
         for (auto [commandName, args] : handshakeCommands)
-
-            sendCommandToMaster(commandName, args);
-        auto response = readFromSocket(masterFd);
-        if (response.has_value() &&
-            response.value().find(handshakeExpectedRes[commandName]) !=
-                std::string::npos)
         {
+            sendCommandToMaster(commandName, args);
+            auto response = readFromSocket(masterFd);
+            if (response.has_value() &&
+                response.value().find(handshakeExpectedRes[commandName]) !=
+                    std::string::npos)
+            {
+            }
         }
     }
-}
-catch (std::runtime_error& e)
-{
-    throw e;
-}
+    catch (std::runtime_error& e)
+    {
+        throw e;
+    }
 }
 
 void RedisServer::sendCommandToMaster(const std::string& command,
