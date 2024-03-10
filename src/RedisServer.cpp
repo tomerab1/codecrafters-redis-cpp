@@ -118,7 +118,7 @@ void RedisServer::sendCommandToMaster(const std::string& command,
                                       const std::vector<std::string>& args)
 {
     std::vector<std::string> commandVector {command};
-    commandVector.reserve(command.size() + args.size() + 1);
+    commandVector.reserve(commandVector.size() + args.size() + 1);
     std::transform(args.begin(),
                    args.end(),
                    std::back_inserter(commandVector),
