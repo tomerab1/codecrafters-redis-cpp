@@ -14,6 +14,7 @@ set(SOURCE_FILES src/Server.cpp src/KeyValueStore.cpp
   src/Commands/PingCommand.cpp
   src/Commands/InfoCommand.cpp
   src/Commands/PSyncCommand.cpp
+  src/Commands/ReplConfCommand.cpp
   src/Commands/InvalidCommand.cpp
   src/Replication/ReplicationInfo.cpp
   )
