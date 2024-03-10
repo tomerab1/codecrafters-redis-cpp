@@ -24,6 +24,8 @@ class RedisServer
     RedisServer(int port, bool isMaster);
     ~RedisServer();
     void start();
+    void connectToMaster(int masterPort, const std::string& masterAddr);
+    void handshake(int masterPort, const std::string& masterAddr);
 
     inline KeyValueStore* getKVStore()
     {
@@ -39,6 +41,7 @@ class RedisServer
 
   private:
     int serverFd;
+    int replicaFd;
     int port;
     std::vector<std::thread> workerThreads;
     std::unique_ptr<KeyValueStore> keyValueStore;

@@ -50,7 +50,59 @@ void RedisServer::start()
         return;
     }
 
+    if (replInfo->getRole() != "master")
+    {
+        handshake(6379, "localhost");
+    }
+
     acceptConnections();
+}
+
+void RedisServer::connectToMaster(int masterPort, const std::string& masterAddr)
+{
+    replicaFd = socket(AF_INET, SOCK_STREAM, 0);
+    if (replicaFd < 0)
+    {
+        throw std::runtime_error("Error: Could not create socket");
+    }
+
+    struct sockaddr_in inMasterAddr;
+    memset(&inMasterAddr, 0, sizeof(inMasterAddr));
+    inMasterAddr.sin_family = AF_INET;
+    inMasterAddr.sin_port = htons(masterPort);
+    // sockAddr.sin_addr.s_addr = inet_addr(masterAddr.c_str());
+
+    if (connect(replicaFd,
+                (struct sockaddr*)&inMasterAddr,
+                sizeof(inMasterAddr)) < 0)
+    {
+        throw std::runtime_error(
+            "Error: could not connect to server from replica");
+    }
+}
+
+void RedisServer::handshake(int masterPort, const std::string& masterAddr)
+{
+    try
+    {
+        connectToMaster(masterPort, masterAddr);
+        auto pingReq = ResponseBuilder::array({"ping"});
+
+        if (send(replicaFd, pingReq.c_str(), pingReq.length(), 0) < 0)
+        {
+            std::cerr << "Could not send PONG to client\n";
+        }
+
+        std::optional<std::string> buffer;
+        if ((buffer = readFromSocket(replicaFd)) == "+pong\r\n")
+        {
+            std::cout << "recv +pong\n";
+        }
+    }
+    catch (std::runtime_error& e)
+    {
+        throw e;
+    }
 }
 
 bool RedisServer::createServerSocket()
