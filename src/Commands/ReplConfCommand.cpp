@@ -15,4 +15,3 @@ void ReplConfCommand::execute(int clientFd,
     {
         std::cerr << "Could not send REPLCONF response to client\n";
     }
-}
