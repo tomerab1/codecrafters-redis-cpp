@@ -1,67 +1,92 @@
-#include <arpa/inet.h>
-#include <cstdlib>
-#include <cstring>
-#include <iostream>
-#include <netdb.h>
+#include "ProgramOptions.hpp"
+#include "RedisServer.hpp"
+#include "Utils.hpp"
+
+#include <any>
 #include <string>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
+
+struct ReplicaOfParams
+{
+    std::string hostName;
+    int port;
+};
+
+std::any strToInt(std::string s)
+{
+    std::size_t idx;
+    return std::stoi(std::string(s), &idx);
+}
+
+std::any replicaOfToVec(std::string s)
+{
+    auto splitted = Utils::split(s, ',');
+    if (splitted.size() < 2)
+    {
+        throw std::logic_error(
+            "replicaOf command should be followed by 2 arguments");
+    }
+
+    return ReplicaOfParams {.hostName = splitted[0],
+                            .port = std::stoi(splitted[1])};
+}
 
 int main(int argc, char** argv)
 {
-    // You can use print statements as follows for debugging, they'll be visible
-    // when running tests.
-    std::cout << "Logs from your program will appear here!\n";
+    ProgramOptions po({ProgramOptions::Option {
+                           .shortName = "-p",
+                           .longName = "--port",
+                           .transformFn = strToInt,
+                           .defaultValue = 6379,
+                       },
+                       ProgramOptions::Option {
+                           .longName = "--replicaof",
+                           .numOfParams = 2,
+                           .transformFn = replicaOfToVec,
+                       }});
 
-    // Uncomment this block to pass the first stage
-    int server_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (server_fd < 0)
+    try
     {
-        std::cerr << "Failed to create server socket\n";
-        return 1;
-    }
+        po.parse(argc, argv);
 
-    // // Since the tester restarts your program quite often, setting REUSE_PORT
-    // // ensures that we don't run into 'Address already in use' errors
-    int reuse = 1;
-    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEPORT, &reuse, sizeof(reuse)) <
-        0)
+        int port;
+        bool isMaster {true};
+        ReplicaOfParams replicaof;
+
+        if (po.hasOption("--port"))
+        {
+            auto value = po.get<int>("--port");
+            if (value.has_value())
+            {
+                port = value.value();
+            }
+        }
+        if (po.hasOption("--replicaof"))
+        {
+            auto value = po.get<ReplicaOfParams>("--replicaof");
+            if (value.has_value())
+            {
+                isMaster = false;
+                replicaof = value.value();
+            }
+        }
+
+        std::cout << "Listening on port " << port << "...\n";
+
+        RedisServer server(port, isMaster);
+
+        if (isMaster)
+        {
+            server.start();
+        }
+        else
+        {
+            server.start(replicaof.port, replicaof.hostName);
+        }
+    }
+    catch (std::exception& e)
     {
-        std::cerr << "setsockopt failed\n";
-        return 1;
+        std::cout << e.what() << "\n";
     }
-
-    struct sockaddr_in server_addr;
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.s_addr = INADDR_ANY;
-    server_addr.sin_port = htons(6379);
-
-    if (bind(server_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) !=
-        0)
-    {
-        std::cerr << "Failed to bind to port 6379\n";
-        return 1;
-    }
-
-    int connection_backlog = 5;
-    if (listen(server_fd, connection_backlog) != 0)
-    {
-        std::cerr << "listen failed\n";
-        return 1;
-    }
-
-    struct sockaddr_in client_addr;
-    int client_addr_len = sizeof(client_addr);
-
-    std::cout << "Waiting for a client to connect...\n";
-
-    accept(server_fd,
-           (struct sockaddr*)&client_addr,
-           (socklen_t*)&client_addr_len);
-    std::cout << "Client connected\n";
-
-    close(server_fd);
 
     return 0;
 }
