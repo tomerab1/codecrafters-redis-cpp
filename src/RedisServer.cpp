@@ -60,8 +60,8 @@ void RedisServer::start(int masterPort, const std::string& masterAddr)
 
 void RedisServer::connectToMaster(int masterPort, const std::string& masterAddr)
 {
-    replicaFd = socket(AF_INET, SOCK_STREAM, 0);
-    if (replicaFd < 0)
+    masterFd = socket(AF_INET, SOCK_STREAM, 0);
+    if (masterFd < 0)
     {
         throw std::runtime_error("Error: Could not create socket");
     }
@@ -72,7 +72,7 @@ void RedisServer::connectToMaster(int masterPort, const std::string& masterAddr)
     inMasterAddr.sin_port = htons(masterPort);
     // sockAddr.sin_addr.s_addr = inet_addr(masterAddr.c_str());
 
-    if (connect(replicaFd,
+    if (connect(masterFd,
                 (struct sockaddr*)&inMasterAddr,
                 sizeof(inMasterAddr)) < 0)
     {
@@ -88,13 +88,13 @@ void RedisServer::handshake(int masterPort, const std::string& masterAddr)
         connectToMaster(masterPort, masterAddr);
         auto pingReq = ResponseBuilder::array({"ping"});
 
-        if (send(replicaFd, pingReq.c_str(), pingReq.length(), 0) < 0)
+        if (send(masterFd, pingReq.c_str(), pingReq.length(), 0) < 0)
         {
             std::cerr << "Could not send PONG to client\n";
         }
 
         std::optional<std::string> buffer;
-        if ((buffer = readFromSocket(replicaFd)) == "+pong\r\n")
+        if ((buffer = readFromSocket(masterFd)) == "+pong\r\n")
         {
             std::cout << "recv +pong\n";
         }

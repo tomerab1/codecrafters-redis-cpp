@@ -41,7 +41,7 @@ class RedisServer
 
   private:
     int serverFd;
-    int replicaFd;
+    int masterFd;
     int port;
     std::vector<std::thread> workerThreads;
     std::unique_ptr<KeyValueStore> keyValueStore;
