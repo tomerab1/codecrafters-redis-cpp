@@ -76,7 +76,6 @@
 				3,
 				4,
 				5,
-				6,
 				7,
 				8,
 				9,
@@ -84,7 +83,8 @@
 				11,
 				12,
 				13,
-				14
+				14,
+				15
 			]
 		}
 	],
@@ -128,7 +128,6 @@
 				3,
 				4,
 				5,
-				6,
 				7,
 				8,
 				9,
@@ -136,14 +135,15 @@
 				11,
 				12,
 				13,
-				14
+				14,
+				15
 			]
 		},
 		{
 			"name" : "Header Files",
 			"sourceIndexes" : 
 			[
-				15
+				6
 			]
 		}
 	],
@@ -187,6 +187,11 @@
 		},
 		{
 			"backtrace" : 1,
+			"path" : "src/ProgramOptions.hpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
 			"compileGroupIndex" : 0,
 			"path" : "src/Commands/EchoCommand.cpp",
 			"sourceGroupIndex" : 0
@@ -218,13 +223,13 @@
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "src/Commands/PSyncCommand.cpp",
+			"path" : "src/Commands/ReplConfCommand.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "src/Commands/ReplConfCommand.cpp",
+			"path" : "src/Commands/PSyncCommand.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
@@ -238,11 +243,6 @@
 			"compileGroupIndex" : 0,
 			"path" : "src/Replication/ReplicationInfo.cpp",
 			"sourceGroupIndex" : 0
-		},
-		{
-			"backtrace" : 1,
-			"path" : "src/Replication/ReplicationInfo.hpp",
-			"sourceGroupIndex" : 1
 		}
 	],
 	"type" : "EXECUTABLE"
