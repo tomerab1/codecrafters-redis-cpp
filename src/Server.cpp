@@ -70,7 +70,6 @@ int main(int argc, char** argv)
             }
         }
 
-        std::cout << isMaster << "\n";
         std::cout << "Listening on port " << port << "...\n";
 
         RedisServer server(port, isMaster);
@@ -81,7 +80,6 @@ int main(int argc, char** argv)
         }
         else
         {
-            std::cout << "here\n";
             server.start(replicaof.port, replicaof.hostName);
         }
     }

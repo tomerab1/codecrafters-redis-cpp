@@ -1,9 +1,6 @@
 #include "ReplConfCommand.hpp"
 
-#include "../KeyValueStore.hpp"
-#include "../RedisServer.hpp"
-
-#include <algorithm>
+#include "pch.hpp"
 
 void ReplConfCommand::execute(int clientFd,
                               const std::vector<std::string>& command,

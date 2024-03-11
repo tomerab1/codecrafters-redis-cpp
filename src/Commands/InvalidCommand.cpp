@@ -1,7 +1,6 @@
 #include "InvalidCommand.hpp"
 
-#include "../RedisServer.hpp"
-#include "../ResponseBuilder.hpp"
+#include "pch.hpp"
 
 #include <iostream>
 

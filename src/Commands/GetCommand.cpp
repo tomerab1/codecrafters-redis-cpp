@@ -1,9 +1,6 @@
 #include "GetCommand.hpp"
 
-#include "../KeyValueStore.hpp"
-#include "../RedisServer.hpp"
-
-#include <algorithm>
+#include "pch.hpp"
 
 void GetCommand::execute(int clientFd,
                          const std::vector<std::string>& command,

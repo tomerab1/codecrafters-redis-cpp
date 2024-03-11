@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.13)
 project(redis-starter-cpp)
 set(CMAKE_CXX_STANDARD 20) # Enable the C++20 standard
+set(CMAKE_BUILD_TYPE Release)
 
 # Source files
 set(SOURCE_FILES 
@@ -10,7 +11,6 @@ set(SOURCE_FILES
   src/ResponseBuilder.cpp
   src/RedisServer.cpp 
   src/ProgramOptions.cpp 
-  src/ProgramOptions.hpp
   src/Commands/EchoCommand.cpp
   src/Commands/GetCommand.cpp
   src/Commands/SetCommand.cpp
@@ -20,6 +20,7 @@ set(SOURCE_FILES
   src/Commands/PSyncCommand.cpp
   src/Commands/InvalidCommand.cpp
   src/Replication/ReplicationInfo.cpp
+  src/CommandDispatcher.cpp
   )
 
 # Executable

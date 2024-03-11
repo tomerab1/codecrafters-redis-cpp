@@ -1,7 +1,6 @@
 #include "PingCommand.hpp"
 
-#include "../KeyValueStore.hpp"
-#include "../RedisServer.hpp"
+#include "pch.hpp"
 
 static constexpr std::string PONG_STR = "+PONG\r\n";
 

@@ -1,10 +1,6 @@
 #include "InfoCommand.hpp"
 
-#include "../KeyValueStore.hpp"
-#include "../RedisServer.hpp"
-#include "../Replication/ReplicationInfo.hpp"
-
-#include <algorithm>
+#include "pch.hpp"
 
 void InfoCommand::execute(int clientFd,
                           const std::vector<std::string>& command,

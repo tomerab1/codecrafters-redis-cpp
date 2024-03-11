@@ -1,8 +1,6 @@
 #include "PSyncCommand.hpp"
 
-#include "../KeyValueStore.hpp"
-#include "../RedisServer.hpp"
-#include "../Replication/ReplicationInfo.hpp"
+#include "pch.hpp"
 
 void PSyncCommand::execute(int clientFd,
                            const std::vector<std::string>& command,
@@ -16,6 +14,12 @@ void PSyncCommand::execute(int clientFd,
 
     if (send(clientFd, response.c_str(), response.length(), 0) < 0)
     {
-        std::cerr << "Could not send PONG to client\n";
+        std::cerr << "Could not send PSYNC to client\n";
+    }
+
+    auto emptyRDB = ResponseBuilder::emptyRDB();
+    if (send(clientFd, emptyRDB.c_str(), emptyRDB.length(), 0) < 0)
+    {
+        std::cerr << "Could not send EMPTY_RDB to client\n";
     }
 }

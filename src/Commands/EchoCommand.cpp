@@ -1,7 +1,6 @@
 #include "EchoCommand.hpp"
 
-#include "../KeyValueStore.hpp"
-#include "../RedisServer.hpp"
+#include "pch.hpp"
 
 void EchoCommand::execute(int clientFd,
                           const std::vector<std::string>& command,
