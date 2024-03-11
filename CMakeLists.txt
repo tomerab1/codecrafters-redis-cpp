@@ -22,6 +22,7 @@ set(SOURCE_FILES
     src/Commands/ReplConfCommand.cpp
     src/Commands/InvalidCommand.cpp
     src/Replication/ReplicationInfo.cpp
+    src/Replication/ReplicationInfo.hpp
 )
 
 # Executable
