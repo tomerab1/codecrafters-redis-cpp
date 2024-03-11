@@ -46,43 +46,42 @@ int main(int argc, char** argv)
 
     try
     {
-        // po.parse(argc, argv);
+        po.parse(argc, argv);
 
-        // int port;
-        // bool isMaster {true};
-        // ReplicaOfParams replicaof;
+        int port;
+        bool isMaster {true};
+        ReplicaOfParams replicaof;
 
-        // if (po.hasOption("--port"))
-        // {
-        //     auto value = po.get<int>("--port");
-        //     if (value.has_value())
-        //     {
-        //         port = value.value();
-        //     }
-        // }
-        // if (po.hasOption("--replicaof"))
-        // {
-        //     auto value = po.get<ReplicaOfParams>("--replicaof");
-        //     if (value.has_value())
-        //     {
-        //         isMaster = false;
-        //         replicaof = value.value();
-        //     }
-        // }
+        if (po.hasOption("--port"))
+        {
+            auto value = po.get<int>("--port");
+            if (value.has_value())
+            {
+                port = value.value();
+            }
+        }
+        if (po.hasOption("--replicaof"))
+        {
+            auto value = po.get<ReplicaOfParams>("--replicaof");
+            if (value.has_value())
+            {
+                isMaster = false;
+                replicaof = value.value();
+            }
+        }
 
-        // std::cout << "Listening on port " << port << "...\n";
+        std::cout << "Listening on port " << port << "...\n";
 
-        RedisServer server(6379, true);
-        server.start();
+        RedisServer server(port, isMaster);
 
-        // if (isMaster)
-        // {
-        //     server.start();
-        // }
-        // else
-        // {
-        //     server.start(replicaof.port, replicaof.hostName);
-        // }
+        if (isMaster)
+        {
+            server.start();
+        }
+        else
+        {
+            server.start(replicaof.port, replicaof.hostName);
+        }
     }
     catch (std::exception& e)
     {
