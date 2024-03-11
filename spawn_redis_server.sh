@@ -8,4 +8,4 @@
 set -e
 cmake . >/dev/null
 make >/dev/null
-exec ./server --port 6380"$@"
+exec ./server "$@"
