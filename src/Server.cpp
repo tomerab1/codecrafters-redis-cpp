@@ -32,7 +32,6 @@ std::any replicaOfToVec(std::string s)
 
 int main(int argc, char** argv)
 {
-    std::cerr << "Here\n";
     ProgramOptions po({ProgramOptions::Option {
                            .shortName = "-p",
                            .longName = "--port",
@@ -71,6 +70,7 @@ int main(int argc, char** argv)
             }
         }
 
+        std::cout << isMaster << "\n";
         std::cout << "Listening on port " << port << "...\n";
 
         RedisServer server(port, isMaster);
@@ -81,6 +81,7 @@ int main(int argc, char** argv)
         }
         else
         {
+            std::cout << "here\n";
             server.start(replicaof.port, replicaof.hostName);
         }
     }

@@ -14,7 +14,7 @@ std::string ResponseBuilder::nil()
 
 std::string ResponseBuilder::fullresync(const std::string str)
 {
-    return "+FULLRESYNC" + str + "\r\n";
+    return "+FULLRESYNC " + str + "\r\n";
 }
 
 std::string ResponseBuilder::error(const std::string& err)

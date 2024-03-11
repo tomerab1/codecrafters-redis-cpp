@@ -107,12 +107,14 @@ void RedisServer::handshake(int masterPort, const std::string& masterAddr)
 
         for (auto [commandName, args] : handshakeCommands)
         {
+            std::cout << "here\n";
             sendCommandToMaster(commandName, args);
             auto response = readFromSocket(masterFd);
             if (response.has_value() &&
                 response.value().find(handshakeExpectedRes[commandName]) !=
                     std::string::npos)
             {
+                std::cerr << response.value() << "\n";
             }
         }
     }
