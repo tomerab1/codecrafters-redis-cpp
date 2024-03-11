@@ -16,7 +16,8 @@ void InfoCommand::execute(int clientFd,
     }
     else
     {
-        auto toEncode = serverInstance->getReplInfo()->toString();
+        // serverInstance->getReplInfo()->toString();
+        auto toEncode = "";
         auto response = ResponseBuilder::bulkString(toEncode);
 
         if (send(clientFd, response.data(), response.length(), 0) < 0)

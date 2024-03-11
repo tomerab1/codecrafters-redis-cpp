@@ -8,9 +8,12 @@ void PSyncCommand::execute(int clientFd,
                            const std::vector<std::string>& command,
                            RedisServer* serverInstance)
 {
-    auto masterId = serverInstance->getReplInfo()->getMasterReplId();
-    auto masterOffset =
-        std::to_string(serverInstance->getReplInfo()->getMasterReplOffset());
+    // auto masterId = serverInstance->getReplInfo()->getMasterReplId();
+    // auto masterOffset =
+    //     std::to_string(serverInstance->getReplInfo()->getMasterReplOffset());
+
+    std::string masterId = "";
+    std::string masterOffset = "";
 
     auto response = ResponseBuilder::fullresync(masterId + " " + masterOffset);
 

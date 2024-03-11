@@ -15,7 +15,7 @@
 #include <vector>
 
 class KeyValueStore;
-class ReplicationInfo;
+// class ReplicationInfo;
 class CommandDispatcher;
 
 class RedisServer
@@ -31,11 +31,11 @@ class RedisServer
         return keyValueStore.get();
     }
 
-    inline ReplicationInfo* getReplInfo()
-    {
-        assert(replInfo.get());
-        return replInfo.get();
-    }
+    // inline ReplicationInfo* getReplInfo()
+    // {
+    //     assert(replInfo.get());
+    //     return replInfo.get();
+    // }
 
   private:
     int serverFd;
@@ -44,7 +44,7 @@ class RedisServer
     std::vector<std::thread> workerThreads;
     std::unique_ptr<KeyValueStore> keyValueStore;
     std::unique_ptr<CommandDispatcher> cmdDispatcher;
-    std::unique_ptr<ReplicationInfo> replInfo;
+    // std::unique_ptr<ReplicationInfo> replInfo;
 
     bool createServerSocket();
     bool bindServer();
