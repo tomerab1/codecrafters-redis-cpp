@@ -154,6 +154,13 @@ bool RedisServer::bindServer()
         std::cerr << "setsockopt failed\n";
         return false;
     }
+    reuse = 1;
+    if (setsockopt(serverFd, SOL_SOCKET, SO_REUSEPORT, &reuse, sizeof(reuse)) <
+        0)
+    {
+        std::cerr << "setsockopt failed\n";
+        return false;
+    }
 
     struct sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
