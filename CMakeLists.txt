@@ -2,9 +2,6 @@ cmake_minimum_required(VERSION 3.13)
 project(redis-starter-cpp)
 set(CMAKE_CXX_STANDARD 20) # Enable the C++20 standard
 
-# Include directories
-include_directories(src)
-
 # Source files
 set(SOURCE_FILES 
   src/Server.cpp 
@@ -27,6 +24,9 @@ set(SOURCE_FILES
 
 # Executable
 add_executable(server ${SOURCE_FILES})
+
+# Specify include directories for the target
+target_include_directories(server PRIVATE src)
 
 # Link libraries
 target_link_libraries(server pthread)

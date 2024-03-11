@@ -32,6 +32,7 @@ std::any replicaOfToVec(std::string s)
 
 int main(int argc, char** argv)
 {
+    std::cerr << "Here\n";
     ProgramOptions po({ProgramOptions::Option {
                            .shortName = "-p",
                            .longName = "--port",
@@ -46,7 +47,6 @@ int main(int argc, char** argv)
 
     try
     {
-        std::cerr << "Here\n";
         po.parse(argc, argv);
 
         int port;
