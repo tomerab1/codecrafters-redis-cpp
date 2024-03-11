@@ -46,6 +46,7 @@ int main(int argc, char** argv)
 
     try
     {
+        std::cerr << "Here\n";
         po.parse(argc, argv);
 
         int port;

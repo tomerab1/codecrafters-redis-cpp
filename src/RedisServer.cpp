@@ -16,11 +16,11 @@ RedisServer::RedisServer(int port, bool isMaster) :
 {
     if (isMaster)
     {
-        // replInfo = std::make_unique<ReplicationInfo>("master");
+        replInfo = std::make_unique<ReplicationInfo>("master");
     }
     else
     {
-        // replInfo = std::make_unique<ReplicationInfo>("slave");
+        replInfo = std::make_unique<ReplicationInfo>("slave");
     }
 }
 
@@ -55,10 +55,10 @@ void RedisServer::start(int masterPort, const std::string& masterAddr)
         return;
     }
 
-    // if (replInfo->getRole() != "master")
-    // {
-    //     handshake(masterPort, masterAddr);
-    // }
+    if (replInfo->getRole() != "master")
+    {
+        handshake(masterPort, masterAddr);
+    }
 
     acceptConnections();
 }
@@ -165,7 +165,7 @@ bool RedisServer::bindServer()
     struct sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = INADDR_ANY;
-    server_addr.sin_port = htons(port);
+    server_addr.sin_port = htons(6379);
     return (bind(serverFd,
                  (struct sockaddr*)&server_addr,
                  sizeof(server_addr)) == 0);
