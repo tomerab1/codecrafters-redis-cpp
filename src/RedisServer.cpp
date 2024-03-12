@@ -7,9 +7,7 @@
 #include "ResponseBuilder.hpp"
 
 #include <algorithm>
-#include <cerrno>
 #include <csignal>
-#include <cstring>
 
 static constexpr int MAX_BUFFER = 4096;
 
@@ -208,7 +206,7 @@ void RedisServer::acceptConnections()
 
     if (replInfo->getRole() == "master")
     {
-        workerThreads.emplace_back(&RedisServer::distributeCommandToReplicas,
+        workerThreads.emplace_back(&RedisServer::distributeCommandsFromBuffer,
                                    this,
                                    std::ref(mShouldTerminateDistribution));
     }
@@ -233,47 +231,59 @@ void RedisServer::acceptConnections()
     }
 }
 
-void RedisServer::distributeCommandToReplicas(bool& shouldTerminateDistribution)
+void RedisServer::distributeCommandsFromBuffer(
+    bool& shouldTerminateDistribution)
 {
     while (!shouldTerminateDistribution)
     {
-        if (replInfo->getRole() == "master")
         {
-            std::unique_lock lk(commandBufferMtx);
-            while (!commandBuffer.empty())
+            std::unique_lock<std::mutex> lock(commandBufferMtx);
+            // Critical section: Access the command buffer
+            if (!commandBuffer.empty())
             {
-                for (auto client : replInfo->getReplicaVector())
-                {
-                    auto rawCommand =
-                        ResponseBuilder::array(commandBuffer.front());
-                    if (send(client,
-                             rawCommand.c_str(),
-                             rawCommand.length(),
-                             0) < 0)
-                    {
-                        std::cerr << "Could not send command to replica "
-                                  << strerror(errno);
-                    }
-                }
-
-                commandBuffer.pop_back();
+                auto rawCommand = ResponseBuilder::array(commandBuffer.front());
+                commandBuffer.pop_front();
+                lock.unlock();  // Release the lock before sending commands
+                // Distribute the command to replicas
+                distributeCommandToReplicas(rawCommand);
             }
+        }  // lock is released here when the unique_lock goes out of scope
+        // Sleep or perform other operations as needed
+    }
+}
+
+void RedisServer::distributeCommandToReplicas(const std::string& rawCommand)
+{
+    for (auto client : replInfo->getReplicaVector())
+    {
+        if (send(client, rawCommand.c_str(), rawCommand.length(), 0) < 0)
+        {
+            std::cerr << "Could not send command to replica\n";
         }
     }
 }
 
 void RedisServer::handleConnection(int clientFd)
 {
+    bool shouldExit {false};
     std::optional<std::string> buffer;
-    while ((buffer = readFromSocket(clientFd)))
+    while ((buffer = readFromSocket(clientFd)) != std::nullopt && !shouldExit)
     {
-        std::vector<std::string> parsedCommand = Parser::parseCommand(*buffer);
-        if (parsedCommand.empty())
+        auto parsedCommands = Parser::parseCommand(*buffer);
+        if (parsedCommands.empty())
         {
-            break;
+            shouldExit = true;
         }
+        for (auto parsedCommand : parsedCommands)
+        {
+            if (parsedCommand.empty())
+            {
+                shouldExit = true;
+                break;
+            }
 
-        cmdDispatcher->dispatch(clientFd, parsedCommand, this);
+            cmdDispatcher->dispatch(clientFd, parsedCommand, this);
+        }
     }
 
     if (replInfo->getRole() == "master")

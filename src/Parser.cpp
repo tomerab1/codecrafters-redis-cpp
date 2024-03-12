@@ -34,11 +34,12 @@ std::string Parser::handleRESPBulkString(std::string& command)
     return str;
 }
 
-std::vector<std::string> Parser::parseCommand(const std::string& command)
+std::vector<std::vector<std::string> >
+Parser::parseCommand(const std::string& command)
 {
     std::string commandCpy = command;
     auto type = mapByteToType[commandCpy.substr(0, 1)];
-    std::vector<std::string> res;
+    std::vector<std::vector<std::string> > res;
     bool isUnknownByte {false};
 
     std::transform(
@@ -52,9 +53,14 @@ std::vector<std::string> Parser::parseCommand(const std::string& command)
             {
                 case RESPDataType::ARRAY:
                     handleRESPArray(commandCpy);
+                    res.emplace_back(std::vector<std::string>());
                     break;
                 case RESPDataType::BULK_STRING:
-                    res.emplace_back(handleRESPBulkString(commandCpy));
+                    if (res.empty())
+                    {
+                        res.emplace_back(std::vector<std::string>());
+                    }
+                    res.back().emplace_back(handleRESPBulkString(commandCpy));
                     break;
                 case RESPDataType::CRLF:
                     handleRESPCRLF(commandCpy);

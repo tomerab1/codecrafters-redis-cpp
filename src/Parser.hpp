@@ -50,5 +50,6 @@ class Parser
     static bool handleRESPArray(std::string& command);
     static void handleRESPCRLF(std::string& command);
     static std::string handleRESPBulkString(std::string& command);
-    static std::vector<std::string> parseCommand(const std::string& command);
+    static std::vector<std::vector<std::string> >
+    parseCommand(const std::string& command);
 };

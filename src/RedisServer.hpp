@@ -6,6 +6,7 @@
 #include <cassert>
 #include <cstring>
 #include <iostream>
+#include <list>
 #include <memory>
 #include <mutex>
 #include <netinet/in.h>
@@ -31,12 +32,12 @@ class RedisServer
 
     inline void addCommandToBuffer(const std::vector<std::string>& command)
     {
-        std::unique_lock lk(commandBufferMtx);
-        std::cout << "adding " << command[0] << " to buffer\n";
+        std::unique_lock<std::mutex> lk(commandBufferMtx);
+        std::cout << "adding " << command.size() << " to buffer\n";
         commandBuffer.emplace_back(command);
     }
 
-    std::vector<std::vector<std::string> > getCommandBuffer()
+    std::list<std::vector<std::string> > getCommandBuffer()
     {
         return commandBuffer;
     }
@@ -59,7 +60,7 @@ class RedisServer
     int port;
     bool mShouldTerminateDistribution {false};
     std::mutex commandBufferMtx;
-    std::vector<std::vector<std::string> > commandBuffer;
+    std::list<std::vector<std::string> > commandBuffer;
     std::vector<std::thread> workerThreads;
     std::unique_ptr<KeyValueStore> keyValueStore;
     std::unique_ptr<CommandDispatcher> cmdDispatcher;
@@ -77,7 +78,8 @@ class RedisServer
     void handshake(int masterPort, const std::string& masterAddr);
     void sendCommandToMaster(const std::string& command,
                              const std::vector<std::string>& args = {});
-    void distributeCommandToReplicas(bool& shouldTerminateDistribution);
+    void distributeCommandToReplicas(const std::string& rawCommand);
+    void distributeCommandsFromBuffer(bool& shouldTerminateDistribution);
     static void handleSIGINT(int signal);
     void shutdown();
 
