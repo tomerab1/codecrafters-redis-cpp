@@ -39,7 +39,7 @@ class RedisServer
 
     std::list<std::vector<std::string> > getCommandBuffer()
     {
-        return commandBuffer
+        return commandBuffer;
     }
 
     inline KeyValueStore* getKVStore()
