@@ -238,17 +238,14 @@ void RedisServer::distributeCommandsFromBuffer(
     {
         {
             std::unique_lock<std::mutex> lock(commandBufferMtx);
-            // Critical section: Access the command buffer
             if (!commandBuffer.empty())
             {
                 auto rawCommand = ResponseBuilder::array(commandBuffer.front());
                 commandBuffer.pop_front();
-                lock.unlock();  // Release the lock before sending commands
-                // Distribute the command to replicas
+                lock.unlock();
                 distributeCommandToReplicas(rawCommand);
             }
-        }  // lock is released here when the unique_lock goes out of scope
-        // Sleep or perform other operations as needed
+        }
     }
 }
 
