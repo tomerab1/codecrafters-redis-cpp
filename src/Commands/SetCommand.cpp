@@ -12,6 +12,12 @@ void SetCommand::execute(int clientFd,
     }
     else
     {
+        assert(serverInstance != nullptr);
+        if (serverInstance->getReplInfo()->getRole() == "master")
+        {
+            serverInstance->addCommandToBuffer(command);
+        }
+
         std::string response = "";
         if (std::find(command.begin(), command.end(), "px") == command.end())
         {

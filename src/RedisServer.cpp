@@ -7,6 +7,9 @@
 #include "ResponseBuilder.hpp"
 
 #include <algorithm>
+#include <cerrno>
+#include <csignal>
+#include <cstring>
 
 static constexpr int MAX_BUFFER = 4096;
 
@@ -22,10 +25,26 @@ RedisServer::RedisServer(int port, bool isMaster) :
     {
         replInfo = std::make_unique<ReplicationInfo>("slave");
     }
+
+    instancePointer = this;
+
+    std::signal(SIGINT, handleSIGINT);
 }
 
 RedisServer::~RedisServer()
+{}
+
+void RedisServer::handleSIGINT(int signal)
 {
+    std::cout << "Shuting down the server...\n";
+    assert(instancePointer != nullptr);
+    instancePointer->shutdown();
+    exit(signal);
+}
+
+void RedisServer::shutdown()
+{
+    mShouldTerminateDistribution = true;
     for (auto&& thread : workerThreads)
     {
         thread.join();
@@ -107,16 +126,18 @@ void RedisServer::handshake(int masterPort, const std::string& masterAddr)
 
         for (auto [commandName, args] : handshakeCommands)
         {
-            std::cout << "here\n";
             sendCommandToMaster(commandName, args);
             auto response = readFromSocket(masterFd);
             if (response.has_value() &&
-                response.value().find(handshakeExpectedRes[commandName]) !=
+                response.value().find(handshakeExpectedRes[commandName]) ==
                     std::string::npos)
             {
                 std::cerr << response.value() << "\n";
             }
         }
+
+        workerThreads.emplace_back(
+            &RedisServer::handleConnection, this, masterFd);
     }
     catch (std::runtime_error& e)
     {
@@ -185,6 +206,13 @@ void RedisServer::acceptConnections()
 
     std::cout << "Waiting for a client to connect...\n";
 
+    if (replInfo->getRole() == "master")
+    {
+        workerThreads.emplace_back(&RedisServer::distributeCommandToReplicas,
+                                   this,
+                                   std::ref(mShouldTerminateDistribution));
+    }
+
     while (true)
     {
         int clientFd =
@@ -205,6 +233,35 @@ void RedisServer::acceptConnections()
     }
 }
 
+void RedisServer::distributeCommandToReplicas(bool& shouldTerminateDistribution)
+{
+    while (!shouldTerminateDistribution)
+    {
+        if (replInfo->getRole() == "master")
+        {
+            std::unique_lock lk(commandBufferMtx);
+            while (!commandBuffer.empty())
+            {
+                for (auto client : replInfo->getReplicaVector())
+                {
+                    auto rawCommand =
+                        ResponseBuilder::array(commandBuffer.front());
+                    if (send(client,
+                             rawCommand.c_str(),
+                             rawCommand.length(),
+                             0) < 0)
+                    {
+                        std::cerr << "Could not send command to replica "
+                                  << strerror(errno);
+                    }
+                }
+
+                commandBuffer.pop_back();
+            }
+        }
+    }
+}
+
 void RedisServer::handleConnection(int clientFd)
 {
     std::optional<std::string> buffer;
@@ -219,7 +276,15 @@ void RedisServer::handleConnection(int clientFd)
         cmdDispatcher->dispatch(clientFd, parsedCommand, this);
     }
 
-    close(clientFd);
+    if (replInfo->getRole() == "master")
+    {
+        auto clientFdVector = replInfo->getReplicaVector();
+        if (std::find(clientFdVector.begin(), clientFdVector.end(), clientFd) ==
+            clientFdVector.end())
+        {
+            close(clientFd);
+        }
+    }
 }
 
 std::optional<std::string> RedisServer::readFromSocket(int client_fd)

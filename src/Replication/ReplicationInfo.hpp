@@ -1,6 +1,8 @@
 #pragma once
 
+#include <stdexcept>
 #include <string>
+#include <vector>
 
 class ReplicationInfo
 {
@@ -32,12 +34,34 @@ class ReplicationInfo
         masterReplOffset = newMasterReplOffset;
     }
 
+    inline void addToReplicaVector(int clientFd)
+    {
+        if (role != "master")
+        {
+            throw std::logic_error(
+                "Error: Attempt to add replica to vector from replica");
+        }
+
+        replicaFdVector.push_back(clientFd);
+    }
+
+    inline std::vector<int> getReplicaVector()
+    {
+        if (role != "master")
+        {
+            throw std::logic_error(
+                "Error: Attempt to get replica vector from replica");
+        }
+        return replicaFdVector;
+    }
+
     std::string toString();
 
   private:
     std::string role;
     std::string masterReplId;
     std::size_t masterReplOffset {0};
+    std::vector<int> replicaFdVector;
 
     std::string generateMasterID();
 };

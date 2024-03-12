@@ -2,10 +2,12 @@
 
 #include <algorithm>
 #include <arpa/inet.h>
+#include <array>
 #include <cassert>
 #include <cstring>
 #include <iostream>
 #include <memory>
+#include <mutex>
 #include <netinet/in.h>
 #include <optional>
 #include <string>
@@ -18,12 +20,26 @@ class KeyValueStore;
 class ReplicationInfo;
 class CommandDispatcher;
 
+static constexpr std::size_t COMMAND_BUFFER_SIZE = 1024;
+
 class RedisServer
 {
   public:
     RedisServer(int port, bool isMaster);
     ~RedisServer();
     void start(int masterPort = 0, const std::string& masterAddr = "");
+
+    inline void addCommandToBuffer(const std::vector<std::string>& command)
+    {
+        std::unique_lock lk(commandBufferMtx);
+        std::cout << "adding " << command[0] << " to buffer\n";
+        commandBuffer.emplace_back(command);
+    }
+
+    std::vector<std::vector<std::string> > getCommandBuffer()
+    {
+        return commandBuffer;
+    }
 
     inline KeyValueStore* getKVStore()
     {
@@ -41,10 +57,15 @@ class RedisServer
     int serverFd;
     int masterFd;
     int port;
+    bool mShouldTerminateDistribution {false};
+    std::mutex commandBufferMtx;
+    std::vector<std::vector<std::string> > commandBuffer;
     std::vector<std::thread> workerThreads;
     std::unique_ptr<KeyValueStore> keyValueStore;
     std::unique_ptr<CommandDispatcher> cmdDispatcher;
     std::unique_ptr<ReplicationInfo> replInfo;
+
+    inline static RedisServer* instancePointer {nullptr};
 
     bool createServerSocket();
     bool bindServer();
@@ -56,6 +77,9 @@ class RedisServer
     void handshake(int masterPort, const std::string& masterAddr);
     void sendCommandToMaster(const std::string& command,
                              const std::vector<std::string>& args = {});
+    void distributeCommandToReplicas(bool& shouldTerminateDistribution);
+    static void handleSIGINT(int signal);
+    void shutdown();
 
     std::optional<std::string> readFromSocket(int client_fd);
 };
