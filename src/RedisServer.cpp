@@ -297,60 +297,59 @@ void RedisServer::distributeCommandToReplicas(const std::string& rawCommand)
             std::cerr << "Could not send command to replica\n";
         }
     }
+}
 
-    void RedisServer::handleConnection(int clientFd)
+void RedisServer::handleConnection(int clientFd)
+{
+    bool shouldExit {false};
+    std::optional<std::string> buffer;
+    while ((buffer = readFromSocket(clientFd)) != std::nullopt && !shouldExit)
     {
-        bool shouldExit {false};
-        std::optional<std::string> buffer;
-        while ((buffer = readFromSocket(clientFd)) != std::nullopt &&
-               !shouldExit)
+        const auto commandPos = (*buffer).find("*");
+        if (commandPos != std::string::npos)
         {
-            const auto commandPos = (*buffer).find("*");
-            if (commandPos != std::string::npos)
-            {
-                auto parsedCommands =
-                    Parser::parseCommand((*buffer).substr(commandPos));
+            auto parsedCommands =
+                Parser::parseCommand((*buffer).substr(commandPos));
 
-                if (parsedCommands.empty())
-                {
-                    shouldExit = true;
-                }
-                for (auto parsedCommand : parsedCommands)
-                {
-                    if (parsedCommand.empty())
-                    {
-                        shouldExit = true;
-                        break;
-                    }
-
-                    cmdDispatcher->dispatch(clientFd, parsedCommand, this);
-                }
-            }
-            else
+            if (parsedCommands.empty())
             {
                 shouldExit = true;
             }
-        }
-
-        if (replInfo->getRole() == "master")
-        {
-            auto clientFdVector = replInfo->getReplicaVector();
-            if (std::find(clientFdVector.begin(),
-                          clientFdVector.end(),
-                          clientFd) == clientFdVector.end())
+            for (auto parsedCommand : parsedCommands)
             {
-                close(clientFd);
+                if (parsedCommand.empty())
+                {
+                    shouldExit = true;
+                    break;
+                }
+
+                cmdDispatcher->dispatch(clientFd, parsedCommand, this);
             }
         }
+        else
+        {
+            shouldExit = true;
+        }
     }
 
-    std::optional<std::string> RedisServer::readFromSocket(int client_fd)
+    if (replInfo->getRole() == "master")
     {
-        char buffer[MAX_BUFFER];
-        ssize_t numRecv = recv(client_fd, buffer, sizeof(buffer), 0);
-        if (numRecv <= 0)
+        auto clientFdVector = replInfo->getReplicaVector();
+        if (std::find(clientFdVector.begin(), clientFdVector.end(), clientFd) ==
+            clientFdVector.end())
         {
-            return std::nullopt;
+            close(clientFd);
         }
-        return std::string(buffer, buffer + numRecv);
     }
+}
+
+std::optional<std::string> RedisServer::readFromSocket(int client_fd)
+{
+    char buffer[MAX_BUFFER];
+    ssize_t numRecv = recv(client_fd, buffer, sizeof(buffer), 0);
+    if (numRecv <= 0)
+    {
+        return std::nullopt;
+    }
+    return std::string(buffer, buffer + numRecv);
+}
