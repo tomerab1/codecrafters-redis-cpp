@@ -28,7 +28,6 @@ class ReplicationInfo
 
     inline void addToMasterReplOffset(std::size_t inc)
     {
-        std::cerr << "inc by: " << inc << "\n";
         masterReplOffset += inc;
     }
 
