@@ -38,6 +38,7 @@ void CommandDispatcher::dispatch(int clientFd,
     }
     else
     {
+        isFound->second->execute(clientFd, commandVec, serverInstance);
         if (serverInstance->getReplInfo()->getRole() == "slave" &&
             serverInstance->getReplInfo()->getFinishedHandshake())
         {
@@ -45,6 +46,5 @@ void CommandDispatcher::dispatch(int clientFd,
             serverInstance->getReplInfo()->addToMasterReplOffset(
                 rawCommand.length());
         }
-        isFound->second->execute(clientFd, commandVec, serverInstance);
     }
 }

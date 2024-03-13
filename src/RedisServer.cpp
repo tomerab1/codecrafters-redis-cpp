@@ -162,7 +162,7 @@ void RedisServer::performHandshakeWithMaster()
 
 void RedisServer::processReceivedCommands(const std::string& response)
 {
-    const auto commandPos = response.find("*");
+    auto commandPos = response.find("*");
     if (commandPos != std::string::npos)
     {
         const auto parsedCommands =

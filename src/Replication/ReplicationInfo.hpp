@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <iostream>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -25,20 +26,27 @@ class ReplicationInfo
         return masterReplId;
     }
 
-    inline std::size_t getMasterReplOffset()
-    {
-        return masterPrevReplOffset.load();
-    }
-
     inline void addToMasterReplOffset(std::size_t inc)
     {
-        masterPrevReplOffset.store(masterReplOffset.load());
+        std::cerr << "inc by: " << inc << "\n";
         masterReplOffset += inc;
+    }
+
+    inline std::size_t getMasterReplOffset()
+    {
+        return masterReplOffset;
     }
 
     inline void setFinishedHandshake(bool isDone)
     {
-        finishedHandshake.store(isDone);
+        // finishedHandshake.store(isDone);
+        finishedHandshake = isDone;
+    }
+
+    inline bool getFinishedHandshake()
+    {
+        // return finishedHandshake.load();
+        return finishedHandshake;
     }
 
     inline void setMasterFd(int fd)
@@ -49,11 +57,6 @@ class ReplicationInfo
     inline int getMasterFd()
     {
         return masterFd;
-    }
-
-    inline bool getFinishedHandshake()
-    {
-        return finishedHandshake.load();
     }
 
     inline void addToReplicaVector(int clientFd)
@@ -83,9 +86,8 @@ class ReplicationInfo
     std::string role;
     std::string masterReplId;
     int masterFd {-1};
-    std::atomic<bool> finishedHandshake {false};
-    std::atomic<std::size_t> masterReplOffset {0};
-    std::atomic<std::size_t> masterPrevReplOffset {0};
+    bool finishedHandshake {false};
+    std::size_t masterReplOffset {0};
     std::vector<int> replicaFdVector;
 
     std::string generateMasterID();
