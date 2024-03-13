@@ -120,6 +120,7 @@ void RedisServer::handshake(int masterPort, const std::string& masterAddr)
     try
     {
         connectToMaster(masterPort, masterAddr);
+        replInfo->setMasterFd(masterFd);
         performHandshakeWithMaster();
         startMasterConnectionHandlerThread();
     }
@@ -162,7 +163,6 @@ void RedisServer::performHandshakeWithMaster()
 void RedisServer::processReceivedCommands(const std::string& response)
 {
     const auto commandPos = response.find("*");
-
     if (commandPos != std::string::npos)
     {
         const auto parsedCommands =
@@ -180,6 +180,7 @@ void RedisServer::processReceivedCommands(const std::string& response)
 
 void RedisServer::startMasterConnectionHandlerThread()
 {
+    replInfo->setFinishedHandshake(true);
     workerThreads.emplace_back(&RedisServer::handleConnection, this, masterFd);
 }
 
@@ -274,13 +275,15 @@ void RedisServer::distributeCommandsFromBuffer()
 {
     while (!mShouldTerminateDistribution)
     {
-        if (!commandBuffer.empty())
         {
             std::unique_lock<std::mutex> lock(commandBufferMtx);
-            auto rawCommand = ResponseBuilder::array(commandBuffer.front());
-            commandBuffer.pop_front();
-            lock.unlock();
-            distributeCommandToReplicas(rawCommand);
+            if (!commandBuffer.empty())
+            {
+                auto rawCommand = ResponseBuilder::array(commandBuffer.front());
+                commandBuffer.pop_front();
+                lock.unlock();
+                distributeCommandToReplicas(rawCommand);
+            }
         }
     }
 }
@@ -302,21 +305,30 @@ void RedisServer::handleConnection(int clientFd)
     std::optional<std::string> buffer;
     while ((buffer = readFromSocket(clientFd)) != std::nullopt && !shouldExit)
     {
-        auto parsedCommands = Parser::parseCommand(*buffer);
+        const auto commandPos = (*buffer).find("*");
+        if (commandPos != std::string::npos)
+        {
+            auto parsedCommands =
+                Parser::parseCommand((*buffer).substr(commandPos));
 
-        if (parsedCommands.empty())
-        {
-            shouldExit = true;
-        }
-        for (auto parsedCommand : parsedCommands)
-        {
-            if (parsedCommand.empty())
+            if (parsedCommands.empty())
             {
                 shouldExit = true;
-                break;
             }
+            for (auto parsedCommand : parsedCommands)
+            {
+                if (parsedCommand.empty())
+                {
+                    shouldExit = true;
+                    break;
+                }
 
-            cmdDispatcher->dispatch(clientFd, parsedCommand, this);
+                cmdDispatcher->dispatch(clientFd, parsedCommand, this);
+            }
+        }
+        else
+        {
+            shouldExit = true;
         }
     }
 

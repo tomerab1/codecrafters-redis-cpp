@@ -9,6 +9,7 @@
 #include "Commands/ReplConfCommand.hpp"
 #include "Commands/SetCommand.hpp"
 #include "RedisServer.hpp"
+#include "Replication/ReplicationInfo.hpp"
 
 CommandDispatcher::CommandDispatcher() :
     strToCommandMap {{
@@ -37,6 +38,13 @@ void CommandDispatcher::dispatch(int clientFd,
     }
     else
     {
+        if (serverInstance->getReplInfo()->getRole() == "slave" &&
+            serverInstance->getReplInfo()->getFinishedHandshake())
+        {
+            auto rawCommand = ResponseBuilder::array(commandVec);
+            serverInstance->getReplInfo()->addToMasterReplOffset(
+                rawCommand.length());
+        }
         isFound->second->execute(clientFd, commandVec, serverInstance);
     }
 }

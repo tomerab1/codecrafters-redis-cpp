@@ -36,6 +36,14 @@ void SetCommand::execute(int clientFd,
                     command[1], command[2], command[4]);
             }
         }
+
+        assert(serverInstance != nullptr);
+        if (serverInstance->getReplInfo()->getRole() == "slave" &&
+            serverInstance->getReplInfo()->getMasterFd() == clientFd &&
+            serverInstance->getReplInfo()->getFinishedHandshake())
+        {
+            return;
+        }
         onSend(clientFd, response, "Could not send SET response to client");
     }
 }

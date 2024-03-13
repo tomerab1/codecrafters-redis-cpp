@@ -14,15 +14,27 @@ void ReplConfCommand::execute(int clientFd,
     }
     else
     {
+        assert(serverInstance != nullptr);
+
         if (command[1] == "getack")
         {
-            auto response = ResponseBuilder::array({"replconf", "ack", "0"});
+            auto response = ResponseBuilder::array(
+                {"replconf",
+                 "ack",
+                 std::to_string(
+                     serverInstance->getReplInfo()->getMasterReplOffset())});
             onSend(clientFd, response, "Could not send REPLCONF ACK to master");
         }
         else
         {
-            auto response = ResponseBuilder::ok();
+            if (serverInstance->getReplInfo()->getRole() == "slave" &&
+                serverInstance->getReplInfo()->getMasterFd() == clientFd &&
+                serverInstance->getReplInfo()->getFinishedHandshake())
+            {
+                return;
+            }
 
+            auto response = ResponseBuilder::ok();
             onSend(clientFd,
                    response,
                    "Could not send REPLCONF response to client");

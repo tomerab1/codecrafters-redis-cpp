@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -26,12 +27,33 @@ class ReplicationInfo
 
     inline std::size_t getMasterReplOffset()
     {
-        return masterReplOffset;
+        return masterPrevReplOffset.load();
     }
 
-    inline void setMasterReplOffset(std::size_t newMasterReplOffset)
+    inline void addToMasterReplOffset(std::size_t inc)
     {
-        masterReplOffset = newMasterReplOffset;
+        masterPrevReplOffset.store(masterReplOffset.load());
+        masterReplOffset += inc;
+    }
+
+    inline void setFinishedHandshake(bool isDone)
+    {
+        finishedHandshake.store(isDone);
+    }
+
+    inline void setMasterFd(int fd)
+    {
+        masterFd = fd;
+    }
+
+    inline int getMasterFd()
+    {
+        return masterFd;
+    }
+
+    inline bool getFinishedHandshake()
+    {
+        return finishedHandshake.load();
     }
 
     inline void addToReplicaVector(int clientFd)
@@ -60,7 +82,10 @@ class ReplicationInfo
   private:
     std::string role;
     std::string masterReplId;
-    std::size_t masterReplOffset {0};
+    int masterFd {-1};
+    std::atomic<bool> finishedHandshake {false};
+    std::atomic<std::size_t> masterReplOffset {0};
+    std::atomic<std::size_t> masterPrevReplOffset {0};
     std::vector<int> replicaFdVector;
 
     std::string generateMasterID();

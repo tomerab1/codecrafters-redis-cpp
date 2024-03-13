@@ -14,6 +14,14 @@ void PingCommand::execute(int clientFd,
     }
     else
     {
+        assert(serverInstance != nullptr);
+        if (serverInstance->getReplInfo()->getRole() == "slave" &&
+            serverInstance->getReplInfo()->getMasterFd() == clientFd &&
+            serverInstance->getReplInfo()->getFinishedHandshake())
+        {
+            return;
+        }
+
         onSend(clientFd, PONG_STR, "Could not send PONG to client");
     }
 }

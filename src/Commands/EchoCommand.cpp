@@ -12,6 +12,14 @@ void EchoCommand::execute(int clientFd,
     }
     else
     {
+        assert(serverInstance != nullptr);
+        if (serverInstance->getReplInfo()->getRole() == "slave" &&
+            serverInstance->getReplInfo()->getMasterFd() == clientFd &&
+            serverInstance->getReplInfo()->getFinishedHandshake())
+        {
+            return;
+        }
+
         std::string response = ResponseBuilder::bulkString(command[1]);
         onSend(clientFd, response, "Could not send ECHO response to client");
     }

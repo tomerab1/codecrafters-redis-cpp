@@ -12,6 +12,14 @@ void InfoCommand::execute(int clientFd,
     }
     else
     {
+        assert(serverInstance != nullptr);
+        if (serverInstance->getReplInfo()->getRole() == "slave" &&
+            serverInstance->getReplInfo()->getMasterFd() == clientFd &&
+            serverInstance->getReplInfo()->getFinishedHandshake())
+        {
+            return;
+        }
+
         auto toEncode = serverInstance->getReplInfo()->toString();
         auto response = ResponseBuilder::bulkString(toEncode);
         onSend(clientFd, response, "Could not send INFO response to client");
