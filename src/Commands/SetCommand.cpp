@@ -36,9 +36,6 @@ void SetCommand::execute(int clientFd,
                     command[1], command[2], command[4]);
             }
         }
-        if (send(clientFd, response.data(), response.length(), 0) < 0)
-        {
-            std::cerr << "Could not send SET response to client\n";
-        }
+        onSend(clientFd, response, "Could not send SET response to client");
     }
 }

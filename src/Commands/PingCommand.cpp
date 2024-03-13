@@ -8,8 +8,12 @@ void PingCommand::execute(int clientFd,
                           const std::vector<std::string>& command,
                           RedisServer* serverInstance)
 {
-    if (send(clientFd, PONG_STR.data(), PONG_STR.length(), 0) < 0)
+    if (command.size() > 1)
     {
-        std::cerr << "Could not send PONG to client\n";
+        onInvalidArgs(clientFd, command);
+    }
+    else
+    {
+        onSend(clientFd, PONG_STR, "Could not send PONG to client");
     }
 }

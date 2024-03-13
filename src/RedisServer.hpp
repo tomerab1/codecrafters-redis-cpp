@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <arpa/inet.h>
 #include <array>
+#include <atomic>
 #include <cassert>
 #include <cstring>
 #include <iostream>
@@ -33,7 +34,6 @@ class RedisServer
     inline void addCommandToBuffer(const std::vector<std::string>& command)
     {
         std::unique_lock<std::mutex> lk(commandBufferMtx);
-        std::cout << "adding " << command.size() << " to buffer\n";
         commandBuffer.emplace_back(command);
     }
 
@@ -54,11 +54,16 @@ class RedisServer
         return replInfo.get();
     }
 
+    inline int getMasterFd()
+    {
+        return masterFd;
+    }
+
   private:
     int serverFd;
     int masterFd;
     int port;
-    bool mShouldTerminateDistribution {false};
+    std::atomic<bool> mShouldTerminateDistribution {false};
     std::mutex commandBufferMtx;
     std::list<std::vector<std::string> > commandBuffer;
     std::vector<std::thread> workerThreads;
@@ -76,10 +81,13 @@ class RedisServer
 
     void connectToMaster(int masterPort, const std::string& masterAddr);
     void handshake(int masterPort, const std::string& masterAddr);
+    void performHandshakeWithMaster();
+    void processReceivedCommands(const std::string& response);
+    void startMasterConnectionHandlerThread();
     void sendCommandToMaster(const std::string& command,
                              const std::vector<std::string>& args = {});
     void distributeCommandToReplicas(const std::string& rawCommand);
-    void distributeCommandsFromBuffer(bool& shouldTerminateDistribution);
+    void distributeCommandsFromBuffer();
     static void handleSIGINT(int signal);
     void shutdown();
 

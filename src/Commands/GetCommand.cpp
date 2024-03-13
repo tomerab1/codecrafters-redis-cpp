@@ -13,9 +13,6 @@ void GetCommand::execute(int clientFd,
     else
     {
         auto response = serverInstance->getKVStore()->get(command[1]);
-        if (send(clientFd, response.data(), response.length(), 0) < 0)
-        {
-            std::cerr << "Could not send GET response to client\n";
-        }
+        onSend(clientFd, response, "Could not send GET response to client");
     }
 }

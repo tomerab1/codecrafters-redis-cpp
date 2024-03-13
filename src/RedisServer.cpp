@@ -30,7 +30,12 @@ RedisServer::RedisServer(int port, bool isMaster) :
 }
 
 RedisServer::~RedisServer()
-{}
+{
+    for (auto&& thread : workerThreads)
+    {
+        thread.join();
+    }
+}
 
 void RedisServer::handleSIGINT(int signal)
 {
@@ -42,13 +47,20 @@ void RedisServer::handleSIGINT(int signal)
 
 void RedisServer::shutdown()
 {
-    mShouldTerminateDistribution = true;
-    for (auto&& thread : workerThreads)
+    mShouldTerminateDistribution.store(true);
+    if (replInfo->getRole() == "master")
     {
-        thread.join();
+        for (auto clientFd : replInfo->getReplicaVector())
+        {
+            close(clientFd);
+        }
+        replInfo->getReplicaVector().clear();
+    }
+    else
+    {
+        close(masterFd);
     }
 
-    close(masterFd);
     close(serverFd);
 }
 
@@ -107,40 +119,68 @@ void RedisServer::handshake(int masterPort, const std::string& masterAddr)
 {
     try
     {
-        using handshakeCommands_t =
-            std::vector<std::pair<std::string, std::vector<std::string> > >;
-        using handshakeExpectedRes_t =
-            std::unordered_map<std::string, std::string>;
-
         connectToMaster(masterPort, masterAddr);
-        handshakeCommands_t handshakeCommands {
-            {"ping", {}},
-            {"replconf", {"listening-port", std::to_string(port)}},
-            {"replconf", {"capa", "psync2"}},
-            {"psync", {"?", "-1"}}};
-
-        handshakeExpectedRes_t handshakeExpectedRes = {
-            {"ping", "+PONG"}, {"replconf", "+OK"}, {"psync", "+FULLRESYNC"}};
-
-        for (auto [commandName, args] : handshakeCommands)
-        {
-            sendCommandToMaster(commandName, args);
-            auto response = readFromSocket(masterFd);
-            if (response.has_value() &&
-                response.value().find(handshakeExpectedRes[commandName]) ==
-                    std::string::npos)
-            {
-                std::cerr << response.value() << "\n";
-            }
-        }
-
-        workerThreads.emplace_back(
-            &RedisServer::handleConnection, this, masterFd);
+        performHandshakeWithMaster();
+        startMasterConnectionHandlerThread();
     }
     catch (std::runtime_error& e)
     {
         throw e;
     }
+}
+
+void RedisServer::performHandshakeWithMaster()
+{
+    const std::vector<std::pair<std::string, std::vector<std::string> > >
+        handshakeCommands = {
+            {"ping", {}},
+            {"replconf", {"listening-port", std::to_string(port)}},
+            {"replconf", {"capa", "psync2"}},
+            {"psync", {"?", "-1"}}};
+
+    const std::unordered_map<std::string, std::string> handshakeExpectedRes = {
+        {"ping", "+PONG"}, {"replconf", "+OK"}, {"psync", "+FULLRESYNC"}};
+
+    std::optional<std::string> response;
+
+    for (const auto& [commandName, args] : handshakeCommands)
+    {
+        sendCommandToMaster(commandName, args);
+        response = readFromSocket(masterFd);
+
+        if (response.has_value() &&
+            response.value().find(handshakeExpectedRes.at(commandName)) ==
+                std::string::npos)
+        {
+            std::cerr << response.value() << "\n";
+        }
+    }
+
+    processReceivedCommands(*response);
+}
+
+void RedisServer::processReceivedCommands(const std::string& response)
+{
+    const auto commandPos = response.find("*");
+
+    if (commandPos != std::string::npos)
+    {
+        const auto parsedCommands =
+            Parser::parseCommand(response.substr(commandPos));
+
+        for (const auto& parsedCommand : parsedCommands)
+        {
+            if (!parsedCommand.empty())
+            {
+                cmdDispatcher->dispatch(masterFd, parsedCommand, this);
+            }
+        }
+    }
+}
+
+void RedisServer::startMasterConnectionHandlerThread()
+{
+    workerThreads.emplace_back(&RedisServer::handleConnection, this, masterFd);
 }
 
 void RedisServer::sendCommandToMaster(const std::string& command,
@@ -207,8 +247,7 @@ void RedisServer::acceptConnections()
     if (replInfo->getRole() == "master")
     {
         workerThreads.emplace_back(&RedisServer::distributeCommandsFromBuffer,
-                                   this,
-                                   std::ref(mShouldTerminateDistribution));
+                                   this);
     }
 
     while (true)
@@ -231,20 +270,17 @@ void RedisServer::acceptConnections()
     }
 }
 
-void RedisServer::distributeCommandsFromBuffer(
-    bool& shouldTerminateDistribution)
+void RedisServer::distributeCommandsFromBuffer()
 {
-    while (!shouldTerminateDistribution)
+    while (!mShouldTerminateDistribution)
     {
+        if (!commandBuffer.empty())
         {
             std::unique_lock<std::mutex> lock(commandBufferMtx);
-            if (!commandBuffer.empty())
-            {
-                auto rawCommand = ResponseBuilder::array(commandBuffer.front());
-                commandBuffer.pop_front();
-                lock.unlock();
-                distributeCommandToReplicas(rawCommand);
-            }
+            auto rawCommand = ResponseBuilder::array(commandBuffer.front());
+            commandBuffer.pop_front();
+            lock.unlock();
+            distributeCommandToReplicas(rawCommand);
         }
     }
 }
@@ -267,6 +303,7 @@ void RedisServer::handleConnection(int clientFd)
     while ((buffer = readFromSocket(clientFd)) != std::nullopt && !shouldExit)
     {
         auto parsedCommands = Parser::parseCommand(*buffer);
+
         if (parsedCommands.empty())
         {
             shouldExit = true;

@@ -27,6 +27,8 @@ void CommandDispatcher::dispatch(int clientFd,
                                  const std::vector<std::string>& commandVec,
                                  RedisServer* serverInstance)
 {
+    assert(serverInstance != nullptr);
+
     auto isFound = strToCommandMap.find(commandVec[0]);
     if (isFound == strToCommandMap.end())
     {

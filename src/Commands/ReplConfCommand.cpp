@@ -2,14 +2,30 @@
 
 #include "pch.hpp"
 
+#include <iostream>
+
 void ReplConfCommand::execute(int clientFd,
                               const std::vector<std::string>& command,
                               RedisServer* serverInstance)
 {
-    auto response = ResponseBuilder::ok();
-
-    if (send(clientFd, response.data(), response.length(), 0) < 0)
+    if (command.size() < 3)
     {
-        std::cerr << "Could not send REPLCONF response to client\n";
+        onInvalidArgs(clientFd, command);
+    }
+    else
+    {
+        if (command[1] == "getack")
+        {
+            auto response = ResponseBuilder::array({"replconf", "ack", "0"});
+            onSend(clientFd, response, "Could not send REPLCONF ACK to master");
+        }
+        else
+        {
+            auto response = ResponseBuilder::ok();
+
+            onSend(clientFd,
+                   response,
+                   "Could not send REPLCONF response to client");
+        }
     }
 }

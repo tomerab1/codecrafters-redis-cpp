@@ -14,10 +14,6 @@ void InfoCommand::execute(int clientFd,
     {
         auto toEncode = serverInstance->getReplInfo()->toString();
         auto response = ResponseBuilder::bulkString(toEncode);
-
-        if (send(clientFd, response.data(), response.length(), 0) < 0)
-        {
-            std::cerr << "Could not send INFO response to client\n";
-        }
+        onSend(clientFd, response, "Could not send INFO response to client");
     }
 }
