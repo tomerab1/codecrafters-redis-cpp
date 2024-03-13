@@ -47,3 +47,4 @@ void CommandDispatcher::dispatch(int clientFd,
                 rawCommand.length());
         }
     }
+}
