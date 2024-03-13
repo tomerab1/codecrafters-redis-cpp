@@ -51,42 +51,43 @@ class ReplicationInfo
     inline void setMasterFd(int fd)
     {
         masterFd = fd;
+    }
 
-        inline int getMasterFd()
+    inline int getMasterFd()
+    {
+        return masterFd;
+    }
+
+    inline void addToReplicaVector(int clientFd)
+    {
+        if (role != "master")
         {
-            return masterFd;
+            throw std::logic_error(
+                "Error: Attempt to add replica to vector from replica");
         }
 
-        inline void addToReplicaVector(int clientFd)
+        replicaFdVector.push_back(clientFd);
+    }
+
+    inline std::vector<int> getReplicaVector()
+    {
+        if (role != "master")
         {
-            if (role != "master")
-            {
-                throw std::logic_error(
-                    "Error: Attempt to add replica to vector from replica");
-            }
-
-            replicaFdVector.push_back(clientFd);
+            throw std::logic_error(
+                "Error: Attempt to get replica vector from replica");
         }
+        return replicaFdVector;
+    }
 
-        inline std::vector<int> getReplicaVector()
-        {
-            if (role != "master")
-            {
-                throw std::logic_error(
-                    "Error: Attempt to get replica vector from replica");
-            }
-            return replicaFdVector;
-        }
+    std::string toString();
 
-        std::string toString();
+  private:
+    std::string role;
+    std::string masterReplId;
+    int masterFd {-1};
+    bool finishedHandshake {false};
+    std::size_t masterReplOffset {0};
+    std::vector<int> replicaFdVector;
 
-      private:
-        std::string role;
-        std::string masterReplId;
-        int masterFd {-1};
-        bool finishedHandshake {false};
-        std::size_t masterReplOffset {0};
-        std::vector<int> replicaFdVector;
-
-        std::string generateMasterID();
-    };
+    std::string generateMasterID();
+};
