@@ -38,13 +38,11 @@ class ReplicationInfo
 
     inline void setFinishedHandshake(bool isDone)
     {
-        // finishedHandshake.store(isDone);
         finishedHandshake = isDone;
     }
 
     inline bool getFinishedHandshake()
     {
-        // return finishedHandshake.load();
         return finishedHandshake;
     }
 
@@ -85,8 +83,10 @@ class ReplicationInfo
     std::string role;
     std::string masterReplId;
     int masterFd {-1};
+
     bool finishedHandshake {false};
     std::size_t masterReplOffset {0};
+
     std::vector<int> replicaFdVector;
 
     std::string generateMasterID();

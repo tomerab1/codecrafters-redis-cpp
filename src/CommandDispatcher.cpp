@@ -8,6 +8,7 @@
 #include "Commands/PingCommand.hpp"
 #include "Commands/ReplConfCommand.hpp"
 #include "Commands/SetCommand.hpp"
+#include "Commands/WaitCommand.hpp"
 #include "RedisServer.hpp"
 #include "Replication/ReplicationInfo.hpp"
 
@@ -20,6 +21,7 @@ CommandDispatcher::CommandDispatcher() :
         {"info", std::make_unique<InfoCommand>()},
         {"psync", std::make_unique<PSyncCommand>()},
         {"replconf", std::make_unique<ReplConfCommand>()},
+        {"wait", std::make_unique<WaitCommand>()},
         {"invalid", std::make_unique<InvalidCommand>()},
     }}
 {}

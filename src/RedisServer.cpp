@@ -153,10 +153,11 @@ void RedisServer::performHandshakeWithMaster()
             response.value().find(handshakeExpectedRes.at(commandName)) ==
                 std::string::npos)
         {
-            std::cerr << response.value() << "\n";
+            std::cerr << *response << "\n";
         }
     }
 
+    replInfo->setFinishedHandshake(true);
     processReceivedCommands(*response);
 }
 
@@ -180,7 +181,6 @@ void RedisServer::processReceivedCommands(const std::string& response)
 
 void RedisServer::startMasterConnectionHandlerThread()
 {
-    replInfo->setFinishedHandshake(true);
     workerThreads.emplace_back(&RedisServer::handleConnection, this, masterFd);
 }
 

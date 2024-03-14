@@ -18,6 +18,7 @@ set(SOURCE_FILES
   src/Commands/InfoCommand.cpp
   src/Commands/ReplConfCommand.cpp
   src/Commands/PSyncCommand.cpp
+  src/Commands/WaitCommand.cpp
   src/Commands/InvalidCommand.cpp
   src/Replication/ReplicationInfo.cpp
   src/CommandDispatcher.cpp

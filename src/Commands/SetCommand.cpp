@@ -8,7 +8,6 @@ void SetCommand::execute(int clientFd,
                          const std::vector<std::string>& command,
                          RedisServer* serverInstance)
 {
-    std::cerr << "Here set command\n";
     if (command.size() < 3)
     {
         onInvalidArgs(clientFd, command);

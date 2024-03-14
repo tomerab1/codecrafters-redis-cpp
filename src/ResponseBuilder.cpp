@@ -17,6 +17,11 @@ std::string ResponseBuilder::fullresync(const std::string str)
     return "+FULLRESYNC " + str + "\r\n";
 }
 
+std::string ResponseBuilder::respInt(int val)
+{
+    return ":" + std::to_string(val) + "\r\n";
+}
+
 std::string ResponseBuilder::error(const std::string& err)
 {
     return "-" + err + "\r\n";
